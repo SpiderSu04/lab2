@@ -57,6 +57,10 @@
     color:var(--coral);
     text-shadow:0 0 7px rgba(217,119,87,.45);
   }
+  @media (max-aspect-ratio: 1/1){
+    #terminal{ width:96vw; height:min(560px,74vh); }
+    #screen{ font-size:12px; padding:14px 12px; }
+  }
   #screen::-webkit-scrollbar{width:6px;}
   #screen::-webkit-scrollbar-thumb{background:#33291f;}
   .line{white-space:pre-wrap;word-break:break-word;}
@@ -105,18 +109,23 @@
   #stage{
     position:fixed;inset:0;
     display:none;
+    flex-direction:column;
     align-items:center;justify-content:center;
     background:var(--dark);
   }
   #gameWrap{
     position:relative;
-    width:min(1000px,96vw);
+    width:min(1000px,100vw);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    height:100%;
   }
   #pixelCanvas{
     display:block;
-    width:100%;
+    width:min(1000px,100vw);
     image-rendering:pixelated;
-    border-radius:6px;
   }
   /* box dialogo stile pokemon */
   #dialog{
@@ -126,7 +135,7 @@
     border:4px solid var(--ink);
     border-radius:6px;
     box-shadow:0 4px 0 rgba(0,0,0,.35), inset 0 0 0 2px var(--cream);
-    padding:12px 16px 14px;
+    padding:14px 18px 18px;
     min-height:84px;
     cursor:pointer;
     display:none;
@@ -136,30 +145,47 @@
     background:var(--coral);
     color:var(--white);
     font-weight:bold;
-    font-size:12px;
+    font-size:13px;
     letter-spacing:1px;
-    padding:2px 10px;
+    padding:3px 12px;
     border:2px solid var(--ink);
     border-radius:4px;
     position:absolute;
-    top:-14px;left:12px;
+    top:-15px;left:14px;
   }
   #dlgText{
     color:var(--ink);
-    font-size:15px;
-    line-height:1.5;
-    min-height:44px;
+    font-size:17px;
+    line-height:1.55;
+    min-height:48px;
   }
   #dlgNext{
-    position:absolute;right:12px;bottom:6px;
+    position:absolute;right:14px;bottom:8px;
     color:var(--coral);
-    font-size:14px;
+    font-size:16px;
     animation:bob 0.8s ease-in-out infinite;
   }
   @keyframes bob{50%{transform:translateY(3px);}}
   #hint{
-    position:absolute;left:0;right:0;bottom:-26px;
-    text-align:center;color:#8a6450;font-size:11px;
+    position:absolute;left:0;right:0;bottom:-24px;
+    text-align:center;color:#8a6450;font-size:12px;
+  }
+
+  /* ---- PORTRAIT / MOBILE: canvas grande in alto, dialogo ancorato in basso ---- */
+  @media (max-aspect-ratio: 1/1){
+    #pixelCanvas{
+      width:100vw;
+    }
+    #dialog{
+      position:fixed;
+      left:12px;right:12px;
+      bottom:calc(12px + env(safe-area-inset-bottom));
+      padding:18px 20px 24px;
+    }
+    #dlgText{ font-size:19px; line-height:1.6; min-height:64px; }
+    #dlgName{ font-size:14px; }
+    #dlgNext{ font-size:20px; bottom:10px; right:16px; }
+    #hint{ display:none; }
   }
 
   /* ============ CONTRATTO ============ */
@@ -242,7 +268,7 @@
 
 <div id="stage">
   <div id="gameWrap">
-    <canvas id="pixelCanvas" width="360" height="200"></canvas>
+    <canvas id="pixelCanvas" width="360" height="260"></canvas>
     <div id="dialog">
       <span id="dlgName"></span>
       <div id="dlgText"></div>
@@ -382,23 +408,24 @@ async function chaos(){
 }
 
 async function runTerminal(){
+  await wait(700);
+  await typeLine('spidersu@sottotetto:~$ ./anno_uno --report', 'hi', 45);
   await wait(600);
-  await typeLine('spidersu@sottotetto:~$ ./anno_uno --report', 'hi');
-  await wait(300);
-  await typeLine('analisi dell\'ultimo anno in corso...', 'dim', 12);
-  await wait(500);
+  await typeLine('analisi dell\'ultimo anno in corso...', 'dim', 32);
+  await wait(1100);
   await typeLine('', '', 1);
   for(const [label, value] of REPORT){
-    await typeLine(padRow(label, value), '', 5);
-    await wait(140);
+    await typeLine(padRow(label, value), '', 16);
+    await wait(360);
   }
-  await wait(700);
+  await wait(1400);
   await typeLine('', '', 1);
-  await typeLine('spidersu@sottotetto:~$ ./anno_uno --racconta', 'hi');
-  await typeLine('generazione del racconto...', 'dim', 14);
-  await wait(600);
-  await typeLine('ATTENZIONE: quantità di ricordi superiore alla memoria disponibile.', 'glitchy', 10);
-  await wait(700);
+  await typeLine('spidersu@sottotetto:~$ ./anno_uno --racconta', 'hi', 45);
+  await wait(400);
+  await typeLine('generazione del racconto...', 'dim', 32);
+  await wait(1100);
+  await typeLine('ATTENZIONE: quantità di ricordi superiore alla memoria disponibile.', 'glitchy', 22);
+  await wait(1400);
   chaos();
 }
 
