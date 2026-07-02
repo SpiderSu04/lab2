@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>anno_uno.exe</title>
+<style>
+  :root{
+    --dark:#141110;
+    --coral:#d97757;
+    --coral-hi:#eda283;
+    --cream:#f3ede1;
+    --ink:#3d3a35;
+    --ink-soft:#57534c;
+    --white:#faf6ee;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--dark);
+    font-family:'Courier New', Courier, monospace;
+    overflow:hidden;
+    -webkit-user-select:none;user-select:none;
+  }
+
+  /* ============ TERMINALE ============ */
+  #termWrap{
+    position:fixed;inset:0;
+    display:flex;align-items:center;justify-content:center;
+  }
+  #terminal{
+    width:min(780px,94vw);
+    height:min(540px,84vh);
+    background:#181412;
+    border:1px solid #33291f;
+    border-radius:10px;
+    box-shadow:0 0 70px rgba(217,119,87,.10), inset 0 0 90px rgba(0,0,0,.55);
+    display:flex;flex-direction:column;
+    position:relative;
+    transition:border-color .8s, box-shadow .8s, background .8s;
+  }
+  #titlebar{
+    display:flex;align-items:center;gap:8px;
+    padding:10px 14px;
+    border-bottom:1px solid #33291f;
+    color:#7a5a44;font-size:12px;
+    transition:opacity .8s;
+  }
+  .dot{width:11px;height:11px;border-radius:50%;}
+  .dot:nth-child(1){background:#ff5f57;}
+  .dot:nth-child(2){background:#febc2e;}
+  .dot:nth-child(3){background:#28c840;}
+  #titlebar span{margin-left:6px;}
+  #screen{
+    flex:1;padding:18px 20px;overflow-y:auto;
+    font-size:13.5px;line-height:1.6;
+    color:var(--coral);
+    text-shadow:0 0 7px rgba(217,119,87,.45);
+  }
+  #screen::-webkit-scrollbar{width:6px;}
+  #screen::-webkit-scrollbar-thumb{background:#33291f;}
+  .line{white-space:pre-wrap;word-break:break-word;}
+  .dim{color:#8a6450;}
+  .hi{color:var(--coral-hi);}
+  .glitchy{color:#ff4d4d;}
+  .cursor{
+    display:inline-block;width:9px;height:15px;
+    background:var(--coral);
+    vertical-align:text-bottom;
+    animation:blink .9s steps(1) infinite;
+  }
+  @keyframes blink{50%{opacity:0;}}
+  #terminal.chaos{animation:shakeHard .1s linear infinite;}
+  @keyframes shakeHard{
+    0%{transform:translate(0,0);}
+    25%{transform:translate(-3px,2px);}
+    50%{transform:translate(3px,-2px);}
+    75%{transform:translate(-2px,-3px);}
+    100%{transform:translate(2px,3px);}
+  }
+  #terminal.naked{
+    background:transparent;border-color:transparent;box-shadow:none;
+  }
+  #terminal.naked #titlebar{opacity:0;}
+  #terminal::after{
+    content:"";position:absolute;inset:0;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,.14) 0 1px, transparent 1px 3px);
+    pointer-events:none;border-radius:10px;
+    transition:opacity .8s;
+  }
+  #terminal.naked::after{opacity:0;}
+  /* il cursore solitario */
+  #lonely{
+    position:fixed;inset:0;
+    display:none;align-items:center;justify-content:center;
+    color:var(--coral);
+    font-size:26px;
+  }
+  #lonely .cursor{width:14px;height:26px;}
+  @media (prefers-reduced-motion: reduce){
+    #terminal.chaos{animation:none;}
+  }
+
+  /* ============ MONDO PIXEL ============ */
+  #stage{
+    position:fixed;inset:0;
+    display:none;
+    align-items:center;justify-content:center;
+    background:var(--dark);
+  }
+  #gameWrap{
+    position:relative;
+    width:min(1000px,96vw);
+  }
+  #pixelCanvas{
+    display:block;
+    width:100%;
+    image-rendering:pixelated;
+    border-radius:6px;
+  }
+  /* box dialogo stile pokemon */
+  #dialog{
+    position:absolute;
+    left:3%;right:3%;bottom:4%;
+    background:var(--white);
+    border:4px solid var(--ink);
+    border-radius:6px;
+    box-shadow:0 4px 0 rgba(0,0,0,.35), inset 0 0 0 2px var(--cream);
+    padding:12px 16px 14px;
+    min-height:84px;
+    cursor:pointer;
+    display:none;
+  }
+  #dlgName{
+    display:inline-block;
+    background:var(--coral);
+    color:var(--white);
+    font-weight:bold;
+    font-size:12px;
+    letter-spacing:1px;
+    padding:2px 10px;
+    border:2px solid var(--ink);
+    border-radius:4px;
+    position:absolute;
+    top:-14px;left:12px;
+  }
+  #dlgText{
+    color:var(--ink);
+    font-size:15px;
+    line-height:1.5;
+    min-height:44px;
+  }
+  #dlgNext{
+    position:absolute;right:12px;bottom:6px;
+    color:var(--coral);
+    font-size:14px;
+    animation:bob 0.8s ease-in-out infinite;
+  }
+  @keyframes bob{50%{transform:translateY(3px);}}
+  #hint{
+    position:absolute;left:0;right:0;bottom:-26px;
+    text-align:center;color:#8a6450;font-size:11px;
+  }
+
+  /* ============ CONTRATTO ============ */
+  #contract{
+    position:fixed;inset:0;
+    display:none;
+    align-items:center;justify-content:center;
+    background:rgba(20,17,16,.75);
+    z-index:50;
+  }
+  #contractBox{
+    width:min(560px,92vw);
+    max-height:88vh;
+    overflow:hidden;
+    background:var(--white);
+    border:4px solid var(--ink);
+    border-radius:6px;
+    box-shadow:0 6px 0 rgba(0,0,0,.4), inset 0 0 0 3px var(--cream);
+    display:flex;flex-direction:column;
+    position:relative;
+  }
+  #contractBox h1{
+    background:var(--coral);
+    color:var(--white);
+    font-size:13px;
+    letter-spacing:1px;
+    padding:10px 14px;
+    border-bottom:4px solid var(--ink);
+  }
+  #clauses{
+    padding:14px 18px;
+    overflow-y:auto;
+    color:var(--ink);
+    font-size:13px;
+    line-height:1.6;
+  }
+  #clauses p{margin-bottom:10px;}
+  #clauses .art{color:var(--coral);font-weight:bold;}
+  #btnRow{
+    position:relative;
+    height:96px;
+    border-top:3px dashed #c9c2b4;
+    margin:0 14px;
+  }
+  .cbtn{
+    position:absolute;
+    top:26px;
+    font-family:inherit;
+    font-size:14px;
+    font-weight:bold;
+    padding:10px 20px;
+    border:3px solid var(--ink);
+    border-radius:5px;
+    cursor:pointer;
+    box-shadow:0 3px 0 var(--ink);
+  }
+  .cbtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink);}
+  #btnYes{left:8%;background:var(--coral);color:var(--white);}
+  #btnNo{right:8%;background:#dcd5c6;color:var(--ink);transition:left .12s, top .12s;}
+  #noMsg{
+    position:absolute;left:0;right:0;bottom:4px;
+    text-align:center;font-size:11px;color:#b05a3c;
+    min-height:14px;
+  }
+</style>
+</head>
+<body>
+
+<div id="termWrap">
+  <div id="terminal">
+    <div id="titlebar">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      <span>spidersu@sottotetto: ~/anno_uno</span>
+    </div>
+    <div id="screen"></div>
+  </div>
+</div>
+
+<div id="lonely"><span class="cursor"></span></div>
+
+<div id="stage">
+  <div id="gameWrap">
+    <canvas id="pixelCanvas" width="360" height="200"></canvas>
+    <div id="dialog">
+      <span id="dlgName"></span>
+      <div id="dlgText"></div>
+      <span id="dlgNext">▼</span>
+    </div>
+    <div id="hint">clicca per continuare</div>
+  </div>
+</div>
+
+<div id="contract">
+  <div id="contractBox">
+    <h1>TERMINI E CONDIZIONI — CONTRATTO DI FIDANZAMENTO v2.0</h1>
+    <div id="clauses">
+      <p><span class="art">Art. 1</span> — Il presente contratto, stipulato in data 29.08.2025 tra le parti <b>GIGIA</b> e <b>SPIDERSU</b>, giunge alla sua naturale scadenza annuale e ne viene richiesto il rinnovo.</p>
+      <p><span class="art">Art. 2</span> — La parte GIGIA si impegna a continuare a vedere nugget nelle nuvole, padelle nelle stelle e qualsiasi altra forma utile a trattenere la controparte.</p>
+      <p><span class="art">Art. 3</span> — La parte SPIDERSU garantisce disponibilità illimitata per salite in Val Ferret a guardare le stelle, senza limiti di orario (validità estesa oltre le ore 3:00).</p>
+      <p><span class="art">Art. 4</span> — Entrambe le parti si impegnano a un quantitativo minimo annuo di: film iniziati, pizze condivise, e attività di cui all'allegato censurato ("cosine per adulti").</p>
+      <p><span class="art">Art. 5</span> — Le puzzette rilevate durante il periodo contrattuale restano di attribuzione contestata e non costituiscono motivo di recesso.</p>
+      <p><span class="art">Art. 6</span> — Il rinnovo è automatico e a tempo indeterminato. Il pulsante di rifiuto è presente esclusivamente per obbligo di legge.</p>
+    </div>
+    <div id="btnRow">
+      <button class="cbtn" id="btnYes">ACCETTA E RINNOVA ♥</button>
+      <button class="cbtn" id="btnNo">RIFIUTA</button>
+      <div id="noMsg"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   CONFIG — testi modificabili
+   ================================================================ */
+const START_DATE = new Date(2025, 7, 29); // 29 agosto 2025
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const days = Math.max(1, Math.floor((Date.now() - START_DATE.getTime()) / 86400000));
+
+const REPORT = [
+  ["giorni ufficiali insieme", String(days)],
+  ["notti in Val Ferret", "2 (fondamentali)"],
+  ["stelle osservate", "14.892"],
+  ["nuvole a forma di nugget", "1 (avvistamento confermato)"],
+  ["pizze condivise", "87"],
+  ["kcal totali di coppia", "847.000.000 (stima per difetto)"],
+  ["ore di sonno di lei", "4.380 (media: tanta)"],
+  ["puzzette rilevate", "6.021 (attribuzione: contestata)"],
+  ["film iniziati", "112"],
+  ["film finiti", "31"],
+  ["livello amore", "[####################] 100%"]
+];
+
+/* ================================================================
+   FASE 1 — TERMINALE + CAOS
+   ================================================================ */
+const screen = document.getElementById('screen');
+const term = document.getElementById('terminal');
+const termWrap = document.getElementById('termWrap');
+const lonely = document.getElementById('lonely');
+
+const wait = ms => new Promise(r => setTimeout(r, reduceMotion ? ms/4 : ms));
+function scrollDown(){ screen.scrollTop = screen.scrollHeight; }
+
+function addLine(html, cls=''){
+  const d = document.createElement('div');
+  d.className = 'line ' + cls;
+  d.innerHTML = html;
+  screen.appendChild(d);
+  scrollDown();
+  return d;
+}
+
+function typeLine(text, cls='', speed=20){
+  return new Promise(res=>{
+    const d = addLine('', cls);
+    const cur = document.createElement('span');
+    cur.className = 'cursor';
+    d.appendChild(cur);
+    let i = 0;
+    const t = setInterval(()=>{
+      if(i < text.length){
+        cur.insertAdjacentText('beforebegin', text[i++]);
+        scrollDown();
+      } else {
+        clearInterval(t);
+        cur.remove();
+        res();
+      }
+    }, reduceMotion ? 3 : speed);
+  });
+}
+
+function padRow(label, value){
+  const dots = '.'.repeat(Math.max(2, 34 - label.length));
+  return label + ' ' + dots + ' ' + value;
+}
+
+const GLITCH = '▓▒░█@#$%&/\\{}<>~^*?!01';
+
+async function chaos(){
+  term.classList.add('chaos');
+  const lines = Array.from(screen.querySelectorAll('.line'));
+  // 1) corruzione dei caratteri
+  const corrupt = setInterval(()=>{
+    for(let k=0;k<14;k++){
+      const l = lines[Math.random()*lines.length|0];
+      if(!l) continue;
+      const t = l.textContent;
+      if(t.length < 3) continue;
+      const i = Math.random()*t.length|0;
+      l.textContent = t.slice(0,i) + GLITCH[Math.random()*GLITCH.length|0] + t.slice(i+1);
+      if(Math.random()<0.15) l.classList.add('glitchy');
+    }
+    // righe spazzatura
+    if(Math.random()<0.5){
+      let junk='';
+      for(let j=0;j<40+Math.random()*30;j++) junk += GLITCH[Math.random()*GLITCH.length|0];
+      const jl = addLine(junk, Math.random()<0.5?'glitchy':'dim');
+      lines.push(jl);
+    }
+  }, reduceMotion?60:45);
+  await wait(2400);
+  clearInterval(corrupt);
+  // 2) cancellazione violenta
+  const all = Array.from(screen.querySelectorAll('.line'));
+  for(let i=all.length-1;i>=0;i--){
+    all[i].remove();
+    if(i%2===0) await wait(28);
+  }
+  term.classList.remove('chaos');
+  // 3) il vuoto: resta solo _
+  term.classList.add('naked');
+  await wait(500);
+  termWrap.style.display='none';
+  lonely.style.display='flex';
+  await wait(reduceMotion?800:2600);
+  lonely.style.display='none';
+  startBuildIn();
+}
+
+async function runTerminal(){
+  await wait(600);
+  await typeLine('spidersu@sottotetto:~$ ./anno_uno --report', 'hi');
+  await wait(300);
+  await typeLine('analisi dell\'ultimo anno in corso...', 'dim', 12);
+  await wait(500);
+  await typeLine('', '', 1);
+  for(const [label, value] of REPORT){
+    await typeLine(padRow(label, value), '', 5);
+    await wait(140);
+  }
+  await wait(700);
+  await typeLine('', '', 1);
+  await typeLine('spidersu@sottotetto:~$ ./anno_uno --racconta', 'hi');
+  await typeLine('generazione del racconto...', 'dim', 14);
+  await wait(600);
+  await typeLine('ATTENZIONE: quantità di ricordi superiore alla memoria disponibile.', 'glitchy', 10);
+  await wait(700);
+  chaos();
+}
+
+/* ================================================================
+   FASE 2 — MONDO PIXEL
+   ================================================================ */
+const cv = document.getElementById('pixelCanvas');
+let ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+const GROUND = H - 34;
+
+const stage = document.getElementById('stage');
+const dlg = document.getElementById('dialog');
+const dlgName = document.getElementById('dlgName');
+const dlgText = document.getElementById('dlgText');
+const dlgNext = document.getElementById('dlgNext');
+const hint = document.getElementById('hint');
+
+/* ---- palette: dino chrome × claude ---- */
+const DAY_BG = '#f3ede1', DAY_INK = '#57534c', DAY_GROUND = '#4a4440';
+const NIGHT_BG = '#1b1815', NIGHT_INK = '#d8d2c4';
+const CORAL = '#d97757', CORAL_DK = '#b05a3c', CORAL_HI = '#eda283';
+
+/* ---- sprite orsi ---- */
+const BEAR=[
+".BB......BB.",
+"BbBB....BBbB",
+"BBBBBBBBBBBB",
+"BBBBBBBBBBBB",
+"BBkBBBBBBkBB",
+"BBBBmmmmBBBB",
+"pBBmmmmmmBBp",
+"BBBmmkkmmBBB",
+".BBBmmmmBBB.",
+".BBBBBBBBBB.",
+"BBBBBBBBBBBB",
+"BBBBBBBBBBBB",
+"BBBBBBBBBBBB",
+".BBBBBBBBBB.",
+".BBB....BBB.",
+".bbb....bbb."
+];
+const BOW=[[9,-1],[10,-1],[8,0],[9,0],[10,0],[11,0],[9,1],[10,1]];
+/* lui: grigio-dino / lei: corallo-claude */
+const PAL_HIM = {B:'#57534c', b:'#3d3a35', m:'#c4bcae', k:'#1a1917', p:'#6e6961'};
+const PAL_HER = {B:'#d97757', b:'#b05a3c', m:'#f3d9c8', k:'#241511', p:'#e89a7e'};
+const BOW_C = '#a33224';
+
+function drawBear(x, y, s, pal, bow, bob=0, blink=false){
+  const yy = y + Math.round(bob);
+  for(let r=0;r<BEAR.length;r++){
+    for(let c=0;c<12;c++){
+      let ch = BEAR[r][c];
+      if(ch==='.') continue;
+      if(blink && ch==='k' && r===4) ch='B';
+      ctx.fillStyle = pal[ch];
+      ctx.fillRect(x+c*s, yy+r*s, s, s);
+    }
+  }
+  if(bow){
+    ctx.fillStyle = BOW_C;
+    for(const [c,r] of BOW) ctx.fillRect(x+c*s, yy+r*s, s, s);
+  }
+}
+const HIM_S=3, HER_S=2.6;
+const HIM_W=12*HIM_S, HER_W=12*HER_S;
+const HIM_Y=GROUND-16*HIM_S, HER_Y=GROUND-16*HER_S;
+
+function drawHeart(x,y,s,color=CORAL){
+  const M=[".X.X.","XXXXX","XXXXX",".XXX.","..X.."];
+  ctx.fillStyle=color;
+  for(let r=0;r<5;r++)for(let c=0;c<5;c++)
+    if(M[r][c]==='X') ctx.fillRect(x+c*s,y+r*s,s,s);
+}
+
+function px(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(x,y,w,h);}
+
+function pixelText(text,cx,y,size,color,align='center'){
+  ctx.fillStyle=color;
+  ctx.font=`bold ${size}px 'Courier New', monospace`;
+  ctx.textAlign=align;
+  ctx.fillText(text,cx,y);
+}
+
+/* ---- fondali ---- */
+const stars = Array.from({length:70},()=>({x:Math.random()*W|0, y:Math.random()*(GROUND-40)|0, t:Math.random()*100}));
+
+function bgDay(f){
+  px(0,0,W,H,DAY_BG);
+  /* montagne stile dino: triangoli scalinati */
+  mountain(30,GROUND,80,60,'#d9d1c0');
+  mountain(120,GROUND,110,86,'#cfc6b2');
+  mountain(250,GROUND,90,70,'#d9d1c0');
+  /* nuvole */
+  cloud(60+((f/9)%400)-40, 30);
+  cloud(230+((f/13)%420)-40, 52);
+  groundLine(DAY_GROUND);
+}
+function bgNight(f){
+  px(0,0,W,H,NIGHT_BG);
+  for(const s of stars){
+    const tw = Math.sin((f+s.t)/18) > -0.2 ? 0.95 : 0.25;
+    ctx.fillStyle = `rgba(243,237,225,${tw})`;
+    ctx.fillRect(s.x, s.y, 2, 2);
+  }
+  /* luna pixel */
+  px(W-50,16,16,16,'#f3ede1'); px(W-55,11,11,11,NIGHT_BG);
+  mountain(40,GROUND,90,55,'#2a2620');
+  mountain(200,GROUND,130,80,'#241f1a');
+  groundLine('#6e6961');
+}
+function mountain(cx, base, w, h, color){
+  ctx.fillStyle=color;
+  const steps=8;
+  for(let i=0;i<steps;i++){
+    const ww = w*(1-i/steps);
+    ctx.fillRect(cx-ww/2, base-h*(i+1)/steps, ww, h/steps+1);
+  }
+  /* neve in punta */
+  ctx.fillStyle= color==='#241f1a'||color==='#2a2620' ? '#8a857a' : '#faf6ee';
+  const ww2=w*(1-6/steps);
+  ctx.fillRect(cx-ww2/2, base-h*7/steps, ww2, h/steps);
+  ctx.fillRect(cx-w*(1-7/steps)/2, base-h, w*(1-7/steps), h/steps+1);
+}
+function cloud(x,y){
+  ctx.fillStyle='#dfd8c8';
+  px(x,y,26,6,'#dfd8c8'); px(x+5,y-4,14,4,'#dfd8c8');
+}
+function groundLine(c){
+  px(0,GROUND,W,2,c);
+  ctx.fillStyle=c;
+  for(let x=4;x<W;x+=14) ctx.fillRect(x,GROUND+6,4,2);
+  for(let x=10;x<W;x+=22) ctx.fillRect(x,GROUND+11,2,2);
+}
+
+/* ---- oggetti ---- */
+function drawYaris(x,y){
+  /* toyota yaris 2005 vista laterale, con due orsi dentro */
+  px(x+6,y-26,64,14,'#b8b2a6');           /* cabina */
+  px(x,y-14,80,14,'#a29a8c');             /* corpo */
+  px(x+10,y-23,24,10,'#241f1a');          /* finestrino ant */
+  px(x+40,y-23,24,10,'#241f1a');          /* finestrino post */
+  /* testa di lui (guida, sinistra) */
+  px(x+14,y-22,8,7,PAL_HIM.B); px(x+13,y-24,3,3,PAL_HIM.B); px(x+20,y-24,3,3,PAL_HIM.B);
+  /* testa di lei (passeggero) + fiocco */
+  px(x+46,y-21,7,6,PAL_HER.B); px(x+45,y-23,3,3,PAL_HER.B); px(x+51,y-23,3,3,PAL_HER.B);
+  px(x+52,y-25,4,3,BOW_C);
+  /* fari e ruote */
+  px(x+76,y-12,4,4,'#f0c060');
+  wheel(x+16,y); wheel(x+60,y);
+}
+function wheel(x,y){ px(x,y-4,12,12,'#1a1917'); px(x+3,y-1,6,6,'#57534c'); }
+
+function drawHouse(x,y,w,h,roofC,bodyC,label){
+  px(x,y-h,w,h,bodyC);
+  ctx.fillStyle=roofC;
+  const steps=6;
+  for(let i=0;i<steps;i++){
+    const ww=w*(1-i/steps)+8;
+    ctx.fillRect(x+(w-ww)/2, y-h-(i+1)*4, ww, 4.5);
+  }
+  px(x+w/2-6,y-16,12,16,'#3d3a35');      /* porta */
+  px(x+8,y-h+8,10,8,'#f0c060');          /* finestra accesa */
+  px(x+w-18,y-h+8,10,8,'#f0c060');
+  if(label) pixelText(label, x+w/2, y-h-30, 9, DAY_INK);
+}
+
+function drawBed(x,y){
+  px(x,y-18,86,18,'#8a5a33');             /* struttura */
+  px(x-4,y-30,8,30,'#6b421f');            /* testiera */
+  px(x+2,y-24,80,10,'#faf6ee');           /* cuscini/materasso */
+  px(x+2,y-16,80,12,CORAL_DK);            /* coperta */
+  ctx.fillStyle=CORAL;
+  for(let i=0;i<5;i++) px(x+6+i*16,y-14,8,2,CORAL);
+}
+
+function drawSmoke(x,y,f,seed){
+  for(let i=0;i<4;i++){
+    const t=(f/2+i*22+seed)%90;
+    const sx=x+Math.sin((t+seed)/9)*5;
+    const sy=y-t*0.7;
+    if(sy>10){
+      ctx.fillStyle=`rgba(216,210,196,${1-t/90})`;
+      ctx.fillRect(sx,sy,3,3);
+    }
+  }
+}
+
+function drawUndies(x,y,s){
+  const M=["XXXXX","XwXwX",".XXX.",".X.X."];
+  const col={X:'#e05a8a', w:'#faf6ee'};
+  for(let r=0;r<4;r++)for(let c=0;c<5;c++){
+    const ch=M[r][c]; if(ch==='.')continue;
+    ctx.fillStyle=col[ch];
+    ctx.fillRect(x+c*s,y+r*s,s,s);
+  }
+}
+
+function nameTag(text, x, y){
+  const w = text.length*6+8;
+  px(x-w/2, y-10, w, 12, 'rgba(250,246,238,.92)');
+  ctx.strokeStyle=DAY_INK; ctx.lineWidth=1;
+  ctx.strokeRect(x-w/2, y-10, w, 12);
+  pixelText(text, x, y, 9, CORAL_DK);
+}
+
+/* ================================================================
+   STORIA — motore a scene con dialoghi
+   beat = indice del dialogo corrente (per cambiare la scena a step)
+   ================================================================ */
+let frame=0, stepIdx=0, beat=0, typing=false, fullText='', charI=0, typeTimer=null;
+let hearts=[], fireworks=[], contractDone=false;
+
+const STORY = [
+{ /* 0 — LAVORO A COURMAYEUR */
+  bg: bgDay,
+  draw(f,b){
+    /* hotel/ristorante */
+    px(40,GROUND-70,120,70,'#e5ddcc');
+    ctx.fillStyle='#b05a3c';
+    for(let i=0;i<7;i++) px(36+i*19, GROUND-78, 12, 8, '#b05a3c'); /* tettoia */
+    px(52,GROUND-52,20,16,'#f0c060'); px(126,GROUND-52,20,16,'#f0c060');
+    px(88,GROUND-24,22,24,'#3d3a35');
+    pixelText('STAGIONE 2025 · COURMAYEUR', 100, GROUND-84, 9, DAY_INK);
+    /* bancone */
+    px(190,GROUND-26,110,26,'#8a5a33'); px(190,GROUND-30,110,4,'#6b421f');
+    /* piatti sul bancone */
+    px(210,GROUND-34,14,3,'#faf6ee'); px(240,GROUND-34,14,3,'#faf6ee'); px(270,GROUND-34,14,3,'#faf6ee');
+    /* orsi al lavoro */
+    const himX=196, herX=262;
+    drawBear(himX,HIM_Y,HIM_S,PAL_HIM,false, Math.sin(f/12)*1.5, f%130<6);
+    drawBear(herX,HER_Y,HER_S,PAL_HER,true, Math.sin(f/12+2)*1.5, f%150<6);
+    nameTag('LUCA', himX+HIM_W/2, HIM_Y-14);
+    nameTag('ROBERTA', herX+HER_W/2, HER_Y-14);
+    /* lei lo sbircia: cuoricino timido dal beat 2 */
+    if(b>=2 && f%80<40) drawHeart(herX+HER_W/2-5, HER_Y-34, 2, CORAL);
+  },
+  dialogs:[
+    ['NARRATORE','Estate 2025. Courmayeur. Due colleghi in stagione.'],
+    ['ROBERTA','Luca! Il tavolo 4 chiede ancora di te.'],
+    ['LUCA','Arrivo, arrivo. (...ma perché mi guarda sempre così?)'],
+    ['NARRATORE','"Parlocchiavano", come si dice.']
+  ]
+},
+{ /* 1 — PRIMA NOTTE IN VAL FERRET */
+  bg: bgNight,
+  draw(f,b){
+    pixelText('VAL FERRET', W/2, 26, 10, '#8a857a');
+    drawYaris(120, GROUND);
+    /* nuvola-nugget dal beat 3 */
+    if(b>=3){
+      ctx.fillStyle='#c4bcae';
+      px(238,44,22,10,'#c4bcae'); px(244,38,14,6,'#c4bcae'); px(234,48,6,6,'#c4bcae');
+      if(b===3 && f%60<30) pixelText('?', 250, 32, 12, CORAL_HI);
+    }
+    if(b>=4 && f%70<35) drawHeart(148, GROUND-42, 2, CORAL);
+  },
+  dialogs:[
+    ['NARRATORE','Una sera di luglio, Luca sale in alta valle a guardare le stelle. Roberta viene con lui.'],
+    ['NARRATORE','Toyota Yaris del 2005. Lui alla guida, lei di fianco. Il cielo sopra la Val Ferret.'],
+    ['ROBERTA','Quella stella lì sembra una padella. E quel gruppo... un carrello della spesa.'],
+    ['ROBERTA','E quella nuvola... giuro, è identica a un nugget del McDonald\'s.'],
+    ['LUCA','(Non ha alcun senso. Però non voglio andare via.)'],
+    ['NARRATORE','Rimasero lì fino alle 3 del mattino.'],
+    ['NARRATORE','(Solo molto tempo dopo lei confessò: le forme strane servivano a farlo restare più a lungo.)']
+  ]
+},
+{ /* 2 — SECONDA NOTTE: NASCE SPIDERSU */
+  bg: bgNight,
+  draw(f,b){
+    pixelText('VAL FERRET · seconda salita', W/2, 26, 10, '#8a857a');
+    drawYaris(120, GROUND);
+    if(b>=1){
+      /* stelle che formano quasi una ragnatela sopra la macchina */
+      ctx.strokeStyle='rgba(237,162,131,.5)'; ctx.lineWidth=1;
+      ctx.beginPath();
+      ctx.moveTo(160,40); ctx.lineTo(150,60); ctx.lineTo(172,55); ctx.lineTo(160,40);
+      ctx.stroke();
+    }
+    if(b>=4){
+      pixelText('SPIDERSU', 160, 80, 14, CORAL_HI);
+      if(f%50<25) drawHeart(196, 66, 2, CORAL);
+    }
+  },
+  dialogs:[
+    ['NARRATORE','Ci tornarono una seconda volta, sempre a luglio.'],
+    ['ROBERTA','Tu sei tipo... un mix tra Gesù e Spiderman.'],
+    ['LUCA','...in che senso, scusa?'],
+    ['ROBERTA','Gesùman? No. Spider-Gesù? Nemmeno. Aspetta... SPIDERSU!'],
+    ['NARRATORE','Nacque così il nome con cui lo salvò in rubrica. Per molto, molto tempo.']
+  ]
+},
+{ /* 3 — IL SOTTOTETTO DI VILLAIR */
+  bg: bgDay,
+  draw(f,b){
+    pixelText('VILLAIR', W/2, 26, 10, DAY_INK);
+    /* casetta di legno con sottotetto */
+    drawHouse(120,GROUND,110,58,'#6b421f','#8a5a33');
+    /* finestrella del sottotetto nel tetto */
+    px(168,GROUND-58-14,14,10,'#f0c060');
+    const himX=248, herX=290;
+    drawBear(himX,HIM_Y,HIM_S,PAL_HIM,false,Math.sin(f/14)*1.2);
+    drawBear(herX,HER_Y,HER_S,PAL_HER,true,Math.sin(f/14+1)*1.2);
+    /* valigia di lei */
+    px(herX+HER_W+4,GROUND-14,14,14,CORAL_DK); px(herX+HER_W+8,GROUND-17,6,3,CORAL_DK);
+    if(b>=2 && f%60<30) drawHeart((himX+herX)/2+8, HIM_Y-16, 2);
+  },
+  dialogs:[
+    ['NARRATORE','Ad agosto, Roberta si trasferisce da lui: un vecchio sottotetto di legno, in un paesino chiamato Villair.'],
+    ['ROBERTA','È... piccolo.'],
+    ['LUCA','È perfetto.']
+  ]
+},
+{ /* 4 — 29 AGOSTO: UFFICIALI */
+  bg: bgDay,
+  draw(f,b){
+    pixelText('29 AGOSTO 2025', W/2, 26, 12, CORAL_DK);
+    const himX=W/2-HIM_W-10, herX=W/2+10;
+    drawBear(himX,HIM_Y,HIM_S,PAL_HIM,false,Math.sin(f/16)*1.2, f%120<6);
+    drawBear(herX,HER_Y,HER_S,PAL_HER,true,Math.sin(f/16+2)*1.2, f%140<6);
+    const hs=3.5+Math.sin(f/10)*0.7;
+    drawHeart(W/2-hs*2.5, HIM_Y-34-Math.sin(f/10)*3, hs);
+    if(b>=2){
+      nameTag('SPIDERSU', himX+HIM_W/2, HIM_Y-14);
+      nameTag('GIGIA', herX+HER_W/2, HER_Y-14);
+    } else {
+      nameTag('LUCA', himX+HIM_W/2, HIM_Y-14);
+      nameTag('ROBERTA', herX+HER_W/2, HER_Y-14);
+    }
+  },
+  dialogs:[
+    ['NARRATORE','29 agosto 2025. Diventa tutto ufficiale.'],
+    ['NARRATORE','E da quel giorno, non più Roberta e Luca...'],
+    ['GIGIA','Gigia.'],
+    ['SPIDERSU','Spidersu.']
+  ]
+},
+{ /* 5 — FINE STAGIONE, DISTANZA */
+  bg: bgDay,
+  draw(f,b){
+    pixelText('10 SETTEMBRE 2025', W/2, 26, 10, DAY_INK);
+    drawHouse(30,GROUND,74,48,'#57534c','#c4bcae','CASA SUA');
+    drawHouse(256,GROUND,74,48,'#b05a3c','#e8b89a','CASA SUA (di lei)');
+    /* cuori che viaggiano tra le due case */
+    for(let i=0;i<3;i++){
+      const t=((f*1.2)+i*90)%260;
+      const x=104+t*0.55;
+      const y=GROUND-70-Math.sin(t/26)*16;
+      drawHeart(x,y,1.6, i%2?CORAL:CORAL_HI);
+    }
+    drawBear(52,HIM_Y+6,HIM_S*0.8,PAL_HIM,false,Math.sin(f/14)*1);
+    drawBear(284,HER_Y+8,HER_S*0.8,PAL_HER,true,Math.sin(f/14+1)*1);
+  },
+  dialogs:[
+    ['NARRATORE','Il 10 settembre la stagione finisce. Ognuno torna a casa propria.'],
+    ['NARRATORE','Ma la distanza conta poco, quando ci si vede comunque.'],
+    ['NARRATORE','E poi... iniziano le avventure.']
+  ]
+},
+{ /* 6 — LECCO */
+  bg: bgDay,
+  draw(f,b){
+    pixelText('LECCO', W/2, 26, 14, DAY_INK);
+    /* lago */
+    px(0,GROUND-18,W,18,'#7ba8b5');
+    ctx.fillStyle='#9cc2cc';
+    for(let x=6;x<W;x+=24) px(x, GROUND-14+Math.sin((f+x)/18)*2, 10, 2, '#9cc2cc');
+    mountain(280,GROUND-18,110,90,'#cfc6b2');
+    /* traghetto */
+    px(40+((f/6)%(W+60))-30, GROUND-30, 34, 10, '#faf6ee');
+    px(48+((f/6)%(W+60))-30, GROUND-36, 12, 6, CORAL_DK);
+    const bx=150;
+    drawBear(bx,HIM_Y,HIM_S,PAL_HIM,false,Math.sin(f/14)*1.2);
+    drawBear(bx+HIM_W+8,HER_Y,HER_S,PAL_HER,true,Math.sin(f/14+1)*1.2);
+    if(f%70<35) drawHeart(bx+HIM_W+2, HIM_Y-16, 2);
+  },
+  dialogs:[
+    ['NARRATORE','Il giorno in cui lui la portò a Lecco.'],
+    ['GIGIA','Quindi è QUESTO il famoso ramo del lago di Como.']
+  ]
+},
+{ /* 7 — AMSTERDAM / ADE */
+  bg: bgNight,
+  draw(f,b){
+    pixelText('AMSTERDAM · ADE', W/2, 26, 12, '#c4bcae');
+    /* casette strette sui canali */
+    const cols=['#b05a3c','#57534c','#8a5a33','#6e6961','#d97757'];
+    for(let i=0;i<5;i++){
+      const hx=30+i*38, hh=54+(i%3)*10;
+      px(hx,GROUND-hh,30,hh,cols[i]);
+      px(hx+9,GROUND-hh-8,12,8,cols[i]);
+      px(hx+6,GROUND-hh+8,7,8,'#f0c060');
+      px(hx+18,GROUND-hh+8,7,8,'#f0c060');
+    }
+    /* canale */
+    px(0,GROUND+4,W,H-GROUND-4,'#2e3a42');
+    /* cassa che pompa */
+    const boom=1+((f%20)<4?1:0);
+    px(238,GROUND-28,26+boom*2,28,'#1a1917');
+    px(246,GROUND-22,10+boom,10+boom,'#57534c');
+    /* note musicali */
+    for(let i=0;i<3;i++){
+      const t=(f*1.4+i*40)%120;
+      pixelText('♪', 252+Math.sin(t/12)*10, GROUND-34-t*0.5, 10, i%2?CORAL:CORAL_HI);
+    }
+    const bx=150;
+    drawBear(bx,HIM_Y+((f%20)<10?0:-3),HIM_S,PAL_HIM,false,0);
+    drawBear(bx+HIM_W+8,HER_Y+((f%20)<10?-3:0),HER_S,PAL_HER,true,0);
+  },
+  dialogs:[
+    ['NARRATORE','La vacanza ad Amsterdam per l\'ADE. Bassi a livelli non consentiti.'],
+    ['SPIDERSU','SENTI CHE ROBA!'],
+    ['GIGIA','COSA?!'],
+    ['SPIDERSU','HO DETTO: SENTI CHE ROBA!'],
+    ['GIGIA','NON TI SENTO, C\'È TROPPA ROBA!']
+  ]
+},
+{ /* 8 — SARDEGNA */
+  bg: bgDay,
+  draw(f,b){
+    pixelText('SARDEGNA', W/2, 26, 14, DAY_INK);
+    /* sole */
+    px(W-56,20,18,18,'#f0c060');
+    /* mare */
+    px(0,GROUND-24,W,24,'#5db3c9');
+    ctx.fillStyle='#8fd0df';
+    for(let x=0;x<W;x+=20) px(x, GROUND-20+Math.sin((f+x)/16)*2, 12, 2, '#8fd0df');
+    /* spiaggia */
+    px(0,GROUND-2,W,H-GROUND+2,'#ecd9a8');
+    /* ombrellone */
+    ctx.fillStyle=CORAL;
+    for(let i=0;i<5;i++) px(96+i*10, GROUND-56+(i%2?3:0), 9, 6, i%2?CORAL:'#faf6ee');
+    px(118,GROUND-52,3,50,'#8a5a33');
+    const bx=160;
+    drawBear(bx,HIM_Y,HIM_S,PAL_HIM,false,Math.sin(f/16)*1);
+    drawBear(bx+HIM_W+8,HER_Y,HER_S,PAL_HER,true,Math.sin(f/16+1)*1);
+    /* granchietto */
+    const gx=60+Math.sin(f/30)*24;
+    px(gx,GROUND+8,8,5,CORAL_DK); px(gx-2,GROUND+6,2,2,CORAL_DK); px(gx+8,GROUND+6,2,2,CORAL_DK);
+  },
+  dialogs:[
+    ['NARRATORE','Il viaggio in Sardegna.'],
+    ['GIGIA','Spidersu... mi metti la crema?'],
+    ['SPIDERSU','(Miglior lavoro della mia vita.)']
+  ]
+},
+{ /* 9 — SERATE FILM + CENSURA */
+  bg: bgNight,
+  draw(f,b){
+    pixelText('UNA SERA QUALSIASI', W/2, 26, 10, '#8a857a');
+    /* stanza */
+    px(20,GROUND-90,W-40,90,'#2a2620');
+    /* tv con film */
+    px(46,GROUND-64,44,30,'#1a1917');
+    px(50,GROUND-60,36,22, (f%40<20)?'#3d5a80':'#5a7aa0');
+    pixelText('FILM', 68, GROUND-46, 8, '#faf6ee');
+    /* letto con i due orsi abbracciati */
+    drawBed(150,GROUND);
+    /* teste che spuntano dalla coperta */
+    px(170,GROUND-30,12,10,PAL_HIM.B); px(168,GROUND-33,4,4,PAL_HIM.B); px(180,GROUND-33,4,4,PAL_HIM.B);
+    px(196,GROUND-28,10,9,PAL_HER.B); px(194,GROUND-31,4,4,PAL_HER.B); px(203,GROUND-31,4,4,PAL_HER.B);
+    px(204,GROUND-34,5,3,BOW_C);
+    if(b<=1){
+      /* fumo che sale */
+      drawSmoke(178,GROUND-36,f,0);
+      drawSmoke(200,GROUND-34,f,40);
+    }
+    if(b===2){
+      /* bacetti crescenti */
+      const n=1+Math.min(3, Math.floor((f%120)/30));
+      for(let i=0;i<n;i++) drawHeart(178+i*10, GROUND-46-i*6-Math.sin(f/8+i)*2, 1.6);
+    }
+    if(b>=3){
+      /* CENSURA */
+      px(120,GROUND-78,150,52,'#f0c060');
+      ctx.strokeStyle='#1a1917'; ctx.lineWidth=3;
+      ctx.strokeRect(121,GROUND-77,148,50);
+      pixelText('ALERT!', 195, GROUND-58, 13, '#1a1917');
+      pixelText('COSINE PER ADULTI', 195, GROUND-42, 10, '#1a1917');
+      /* mutanda che vola ad arco */
+      const t=(f%110)/110;
+      const ux=130+t*130, uy=GROUND-84-Math.sin(t*Math.PI)*34;
+      drawUndies(ux,uy,3);
+    }
+  },
+  dialogs:[
+    ['NARRATORE','E poi le sere così: un film, l\'abbraccio, il fumo che sale piano.'],
+    ['GIGIA','Questo film non lo finiamo neanche stavolta, vero?'],
+    ['SPIDERSU','Assolutamente no.'],
+    ['NARRATORE','⚠ SEGNALE INTERROTTO PER MOTIVI DI "COSINE PER ADULTI" ⚠'],
+    ['NARRATORE','(Il traghetto delle mutande ringrazia per l\'attenzione.)']
+  ]
+},
+{ /* 10 — LA MAISON DE FILIPPO */
+  bg: bgNight,
+  draw(f,b){
+    /* locanda di montagna */
+    px(70,GROUND-84,220,84,'#6b421f');
+    ctx.fillStyle='#3d2a16';
+    for(let i=0;i<8;i++) px(60+i*31, GROUND-96+(i%2?2:0), 26, 10, '#3d2a16'); /* tetto */
+    /* insegna GRANDE e leggibile */
+    px(92,GROUND-76,176,22,'#f3ede1');
+    ctx.strokeStyle='#1a1917'; ctx.lineWidth=2;
+    ctx.strokeRect(93,GROUND-75,174,20);
+    pixelText('LA MAISON DE FILIPPO', 180, GROUND-61, 12, CORAL_DK);
+    /* lanterne */
+    px(80,GROUND-50,6,8,'#f0c060'); px(274,GROUND-50,6,8,'#f0c060');
+    /* finestre calde */
+    px(104,GROUND-44,18,14,'#f0c060'); px(238,GROUND-44,18,14,'#f0c060');
+    px(160,GROUND-30,40,30,'#3d2a16'); /* porta */
+    /* i due orsi davanti */
+    drawBear(128,HIM_Y+4,HIM_S*0.9,PAL_HIM,false,Math.sin(f/14)*1);
+    drawBear(206,HER_Y+5,HER_S*0.9,PAL_HER,true,Math.sin(f/14+1)*1);
+    if(f%60<30) drawHeart(176, HIM_Y-6, 2);
+    pixelText('ENTRÈVES', W/2, 26, 9, '#8a857a');
+  },
+  dialogs:[
+    ['NARRATORE','E una cena alla locanda: La Maison de Filippo, a Entrèves.'],
+    ['GIGIA','Ho fame per tre.'],
+    ['SPIDERSU','Sei nel posto giusto.']
+  ]
+},
+{ /* 11 — FINALE: UN ANNO DOPO */
+  bg: bgNight,
+  draw(f,b){
+    pixelText('UN ANNO DOPO', W/2, 26, 12, '#c4bcae');
+    const himX=W/2-HIM_W-8, herX=W/2+8;
+    drawBear(himX,HIM_Y,HIM_S,PAL_HIM,false,Math.sin(f/16)*1.2, f%130<6);
+    drawBear(herX,HER_Y,HER_S,PAL_HER,true,Math.sin(f/16+2)*1.2, f%150<6);
+    const hs=3+Math.sin(f/12)*0.6;
+    drawHeart(W/2-hs*2.5, HIM_Y-32, hs);
+    /* stella cadente ogni tanto */
+    const t=f%160;
+    if(t<40){ px(40+t*3,30+t*1.2,3,2,'#faf6ee'); px(34+t*3,27+t*1.2,6,1,'rgba(250,246,238,.4)'); }
+  },
+  dialogs:[
+    ['NARRATORE','E così, tra stelle, nugget e sottotetti, è passato un anno intero.'],
+    ['NARRATORE','Il sistema richiede ora una conferma da parte dell\'utente GIGIA.']
+  ]
+}
+];
+
+/* ---- effetto costruzione iniziale (pixel che arrivano) ---- */
+let building=false, buildOrder=[], buildShown=0, buildBuf=null;
+
+function startBuildIn(){
+  stage.style.display='flex';
+  /* renderizza il primo frame della scena 0 in un buffer */
+  buildBuf = document.createElement('canvas');
+  buildBuf.width=W; buildBuf.height=H;
+  const realCtx = ctx;
+  ctx = buildBuf.getContext('2d');
+  STORY[0].bg(0);
+  STORY[0].draw(0,0);
+  ctx = realCtx;
+  /* ordine casuale dei blocchi 4x4 */
+  const B=4;
+  buildOrder=[];
+  for(let y=0;y<H;y+=B)for(let x=0;x<W;x+=B) buildOrder.push([x,y]);
+  for(let i=buildOrder.length-1;i>0;i--){
+    const j=Math.random()*(i+1)|0;
+    [buildOrder[i],buildOrder[j]]=[buildOrder[j],buildOrder[i]];
+  }
+  buildShown=0; building=true;
+  ctx.fillStyle=NIGHT_BG; ctx.fillRect(0,0,W,H);
+  requestAnimationFrame(loop);
+}
+
+/* ---- ciclo principale ---- */
+function loop(){
+  if(contractDone) return; /* la festa finale ha il suo ciclo */
+  frame++;
+  if(building){
+    /* pixel che arrivano: pochi all'inizio, poi valanga */
+    const speed = reduceMotion ? 400 : Math.min(4+Math.floor(buildShown/60), 90);
+    for(let k=0;k<speed && buildShown<buildOrder.length;k++){
+      const [x,y]=buildOrder[buildShown++];
+      ctx.drawImage(buildBuf, x,y,4,4, x,y,4,4);
+      /* scintilla corallo */
+      if(Math.random()<0.06){ ctx.fillStyle=CORAL_HI; ctx.fillRect(x,y,4,4); }
+    }
+    if(buildShown>=buildOrder.length){
+      building=false;
+      showDialog();
+    }
+    requestAnimationFrame(loop);
+    return;
+  }
+  const st=STORY[stepIdx];
+  st.bg(frame);
+  st.draw(frame,beat);
+  requestAnimationFrame(loop);
+}
+
+/* ---- dialoghi ---- */
+function showDialog(){
+  dlg.style.display='block';
+  beat=0;
+  speak();
+}
+function speak(){
+  const st=STORY[stepIdx];
+  const [name,text]=st.dialogs[beat];
+  dlgName.textContent=name;
+  dlgName.style.background = name==='NARRATORE' ? '#57534c' : (name==='GIGIA'||name==='ROBERTA') ? '#d97757' : '#3d5a80';
+  fullText=text; charI=0; typing=true;
+  dlgText.textContent='';
+  dlgNext.style.visibility='hidden';
+  clearInterval(typeTimer);
+  typeTimer=setInterval(()=>{
+    if(charI<fullText.length){
+      dlgText.textContent+=fullText[charI++];
+    }else{
+      clearInterval(typeTimer);
+      typing=false;
+      dlgNext.style.visibility='visible';
+    }
+  }, reduceMotion?2:24);
+}
+let contractOpen=false;
+function advance(){
+  if(building || contractOpen || contractDone) return;
+  if(typing){
+    clearInterval(typeTimer);
+    dlgText.textContent=fullText;
+    typing=false;
+    dlgNext.style.visibility='visible';
+    return;
+  }
+  hint.style.display='none';
+  const st=STORY[stepIdx];
+  if(beat < st.dialogs.length-1){
+    beat++;
+    speak();
+  } else if(stepIdx < STORY.length-1){
+    stepIdx++;
+    frame=0;
+    beat=0;
+    speak();
+  } else {
+    /* fine storia → contratto */
+    dlg.style.display='none';
+    openContract();
+  }
+}
+document.getElementById('gameWrap').addEventListener('click', advance);
+document.addEventListener('keydown', e=>{
+  if(e.key==='Enter'||e.key===' ') advance();
+});
+
+/* ================================================================
+   FASE 3 — CONTRATTO con pulsante NO che scappa
+   ================================================================ */
+const contract=document.getElementById('contract');
+const btnNo=document.getElementById('btnNo');
+const btnYes=document.getElementById('btnYes');
+const btnRow=document.getElementById('btnRow');
+const noMsg=document.getElementById('noMsg');
+
+const NO_TAUNTS=[
+  'no.',
+  'il pulsante non è d\'accordo.',
+  'errore 403: rifiuto non autorizzato.',
+  'nemmeno un nugget ti farebbe cambiare idea?',
+  'il pulsante è andato a guardare le stelle. riprova mai.',
+  'clausola art. 6: te l\'avevamo detto.'
+];
+let taunt=0;
+
+function dodgeNo(){
+  const rw=btnRow.clientWidth, rh=btnRow.clientHeight;
+  const bw=btnNo.offsetWidth, bh=btnNo.offsetHeight;
+  const nx=Math.random()*(rw-bw-8)+4;
+  const ny=Math.random()*(rh-bh-22)+2;
+  btnNo.style.left=nx+'px';
+  btnNo.style.right='auto';
+  btnNo.style.top=ny+'px';
+  noMsg.textContent=NO_TAUNTS[Math.min(taunt++, NO_TAUNTS.length-1)];
+}
+btnNo.addEventListener('mouseenter', dodgeNo);
+btnNo.addEventListener('touchstart', e=>{e.preventDefault(); dodgeNo();}, {passive:false});
+btnNo.addEventListener('click', dodgeNo);
+
+function openContract(){
+  contractOpen=true;
+  contract.style.display='flex';
+}
+
+btnYes.addEventListener('click', ()=>{
+  contract.style.display='none';
+  contractDone=true;
+  startCelebration();
+});
+
+/* ---- festa finale ---- */
+function startCelebration(){
+  dlg.style.display='none';
+  stepIdx=STORY.length; /* fuori dalla storia */
+  fireworks=[]; hearts=[];
+  celebrationLoop();
+}
+function spawnFirework(){
+  const cx=30+Math.random()*(W-60), cy=30+Math.random()*70;
+  const colors=[CORAL,CORAL_HI,'#f0c060','#faf6ee'];
+  const col=colors[Math.random()*colors.length|0];
+  for(let i=0;i<16;i++){
+    const a=i/16*Math.PI*2;
+    fireworks.push({x:cx,y:cy,vx:Math.cos(a)*(1+Math.random()),vy:Math.sin(a)*(1+Math.random()),life:40+Math.random()*20,c:col});
+  }
+}
+function celebrationLoop(){
+  frame++;
+  bgNight(frame);
+  if(frame%34===0 && !reduceMotion) spawnFirework();
+  fireworks.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.03;p.life--;});
+  fireworks=fireworks.filter(p=>p.life>0);
+  fireworks.forEach(p=>{ctx.fillStyle=p.c;ctx.fillRect(p.x,p.y,2.5,2.5);});
+  if(frame%16===0) hearts.push({x:Math.random()*W,y:H+6,v:0.4+Math.random()*0.6,s:1.2+Math.random()*1.4});
+  hearts.forEach(h=>h.y-=h.v);
+  hearts=hearts.filter(h=>h.y>-10);
+  hearts.forEach(h=>drawHeart(h.x,h.y,h.s,'rgba(217,119,87,.75)'));
+  const himX=W/2-HIM_W-8, herX=W/2+8;
+  drawBear(himX,HIM_Y,HIM_S,PAL_HIM,false,Math.sin(frame/14)*1.5);
+  drawBear(herX,HER_Y,HER_S,PAL_HER,true,Math.sin(frame/14+2)*1.5);
+  const hs=3.5+Math.sin(frame/10)*0.8;
+  drawHeart(W/2-hs*2.5, HIM_Y-36, hs);
+  pixelText('CONTRATTO RINNOVATO ✓', W/2, 40, 16, CORAL_HI);
+  pixelText('GIGIA ♥ SPIDERSU', W/2, 62, 13, '#faf6ee');
+  pixelText('dal 29.08.2025 — a tempo indeterminato', W/2, 80, 9, '#c4bcae');
+  requestAnimationFrame(celebrationLoop);
+}
+
+runTerminal();
+</script>
+</body>
+</html>
