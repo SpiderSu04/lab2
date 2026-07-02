@@ -106,6 +106,19 @@
   }
 
   /* ============ MONDO PIXEL ============ */
+  #sndBtn{
+    position:fixed;
+    top:calc(10px + env(safe-area-inset-top));
+    right:12px;
+    z-index:40;
+    background:rgba(20,17,16,.6);
+    border:2px solid #57534c;
+    border-radius:6px;
+    font-size:16px;
+    padding:6px 10px;
+    cursor:pointer;
+    color:#f3ede1;
+  }
   #stage{
     position:fixed;inset:0;
     display:none;
@@ -267,6 +280,7 @@
 <div id="lonely"><span class="cursor"></span></div>
 
 <div id="stage">
+  <button id="sndBtn">🔊</button>
   <div id="gameWrap">
     <canvas id="pixelCanvas" width="360" height="260"></canvas>
     <div id="dialog">
@@ -624,6 +638,59 @@ function drawUndies(x,y,s){
   }
 }
 
+/* ---- avatar pixel di Luca: ciuffo, occhiali neri, pizzetto, polo, collanina ---- */
+const LUCA_SPR=[
+"....HHHHHHHH....",
+"..HHHHHHHHHHH...",
+".HHHHHHHHHHHHH..",
+".HHHHSSSSSSHHH..",
+".HHSSSSSSSSSHH..",
+".HGGGGGSSGGGGG..",
+".HGLLGGSSGGLLG..",
+".HSSSSSSSSSSSH..",
+"..SSSSSDDSSSS...",
+"..SSDSSSSSDSS...",
+"..SSDDDDDDDSS...",
+"...SSDDDDDSS....",
+"....SSSSSSS.....",
+"...PPPNNNNPPP...",
+"..PPPPPPPPPPPP..",
+".PPPPPPPPPPPPPP.",
+".SPPPPPPPPPPPPS.",
+".SPPPPPPPPPPPPS.",
+"..S.PPPPPPPP.S..",
+"....JJJJJJJJ....",
+"....JJJJ.JJJ....",
+"....JJJ..JJJ....",
+"....JJJ..JJJ....",
+"....kkk..kkk...."
+];
+const PAL_LUCA={H:'#6b4a2e', S:'#e6c19c', G:'#17161a', L:'#5a6a78', D:'#4f3a26', P:'#3d5a80', N:'#c9c2b4', J:'#33333d', k:'#1a1917'};
+const AV_S=2.4;
+function drawLuca(x,y,s,f){
+  const bob=Math.round(Math.sin(f/22)*1);
+  for(let r=0;r<LUCA_SPR.length;r++){
+    for(let c=0;c<16;c++){
+      const ch=LUCA_SPR[r][c];
+      if(ch==='.') continue;
+      ctx.fillStyle=PAL_LUCA[ch];
+      ctx.fillRect(x+c*s, y+bob+r*s, s, s);
+    }
+  }
+}
+function drawEnvelope(x,y,s,f){
+  const yy=y+Math.round(Math.sin(f/16)*2);
+  px(x,yy,16*s,10*s,'#faf6ee');
+  ctx.strokeStyle=CORAL_DK; ctx.lineWidth=s;
+  ctx.strokeRect(x,yy,16*s,10*s);
+  /* lembo della busta */
+  ctx.strokeStyle=CORAL;
+  ctx.beginPath();
+  ctx.moveTo(x,yy); ctx.lineTo(x+8*s,yy+5*s); ctx.lineTo(x+16*s,yy);
+  ctx.stroke();
+  drawHeart(x+6.5*s, yy+5.5*s, s*0.8);
+}
+
 function nameTag(text, x, y){
   const w = text.length*6+8;
   px(x-w/2, y-10, w, 12, 'rgba(250,246,238,.92)');
@@ -948,7 +1015,7 @@ const STORY = [
     ['SPIDERSU','Sei nel posto giusto.']
   ]
 },
-{ /* 11 — FINALE: UN ANNO DOPO */
+{ /* 11 — UN ANNO DOPO: transizione alla lettera */
   bg: bgNight,
   draw(f,b){
     pixelText('UN ANNO DOPO', W/2, 26, 12, '#c4bcae');
@@ -963,7 +1030,59 @@ const STORY = [
   },
   dialogs:[
     ['NARRATORE','E così, tra stelle, nugget e sottotetti, è passato un anno intero.'],
-    ['NARRATORE','Il sistema richiede ora una conferma da parte dell\'utente GIGIA.']
+    ['NARRATORE','E questa, in breve, è la nostra storia.'],
+    ['NARRATORE','Ma prima dell\'ultima formalità... c\'è una cosa che vorrei dirti io.'],
+    ['NARRATORE','Senza orsi di mezzo.']
+  ]
+},
+{ /* 12 — LA LETTERA (l'avatar di Luca si rivela) */
+  bg: bgNight,
+  letter:true,     /* testo più lento, voce più bassa */
+  tiAmoBeat:21,    /* indice del beat "Ti amo." */
+  draw(f,b){
+    /* Val Ferret di notte, silenziosa */
+    pixelText('VAL FERRET', W/2, 26, 9, '#8a857a');
+    /* i due orsi, piccoli, seduti in disparte a guardare */
+    drawBear(18, GROUND-16*2, 2, PAL_HIM, false, 0);
+    drawBear(48, GROUND-16*1.8, 1.8, PAL_HER, true, 0);
+    /* l'avatar al centro */
+    drawLuca(W/2-8*AV_S, GROUND-24*AV_S, AV_S, f);
+    /* la busta, dal secondo beat */
+    if(b>=1) drawEnvelope(W/2+8*AV_S+8, GROUND-24*AV_S+14, 2, f);
+    /* sul "Ti amo": stella cadente + cuore grande */
+    if(b>=this.tiAmoBeat){
+      const t=f%140;
+      if(t<44){ px(30+t*3.4,24+t*1.1,3,2,'#faf6ee'); px(23+t*3.4,21+t*1.1,7,1,'rgba(250,246,238,.45)'); }
+      const hs=2.6+Math.sin(f/11)*0.5;
+      drawHeart(W/2-hs*2.5, GROUND-24*AV_S-24-Math.sin(f/11)*3, hs);
+    }
+  },
+  dialogs:[
+    ['LUCA','Il narratore di questa storia... ero io. Da sempre. E ho una lettera per te.'],
+    ['LUCA','Gigia. Un anno fa, il primo luglio alle 23:23, ti scrivevo il primo messaggio: "Io roby ci sono". Seguito da "(sono Luca nel caso non avessi salvato il numero)". Un maestro del rimorchio, fin da subito.'],
+    ['LUCA','A ripensarci, è iniziato tutto nel modo meno romantico possibile: appuntamenti ai cassonetti, lavatrici scroccate e polo dimenticate in giro per mezza Courmayeur.'],
+    ['LUCA','Eppure, in mezzo a quella roba lì, una sera ti guardavo dare forme assurde alle nuvole e ho capito che non volevo essere da nessun\'altra parte.'],
+    ['LUCA','Ma il momento esatto in cui ho capito di essere innamorato di te lo ricordo bene: al palchetto di La Saxe. Ballavamo, io dietro di te, e ci siamo baciati davanti a tutti.'],
+    ['LUCA','Niente più nascondersi, niente sotterfugi. Quello che fino a quel momento era stato quasi un segreto, da lì è diventato nostro alla luce del sole. E lì l\'ho saputo.'],
+    ['LUCA','E devo ringraziarti per una cosa che non ti ho mai detto abbastanza: la pazienza che hai avuto con me all\'inizio. Ci ho messo un po\' ad aprirmi. Tu non hai mai spinto, hai solo aspettato. E ne è valsa la pena, spero.'],
+    ['LUCA','Non ti dirò che è stato un anno perfetto, perché non lo è stato. Ci sono stati momenti difficili, e lo sappiamo bene entrambi.'],
+    ['LUCA','Ma ogni volta abbiamo fatto la stessa scelta: parlarne, e lavorarci su. Siamo migliorati entrambi. Tu soprattutto. E per me questo vale più di un anno perfetto.'],
+    ['LUCA','Te l\'ho scritto una volta e te lo ridico qui, che rimanga agli atti: sei un\'anima pura, e in un mondo pieno di merda non è poco.'],
+    ['LUCA','Grazie per la bottiglia d\'acqua riempita la sera, per il letto rifatto ogni mattina, per il buongiorno di ogni singolo giorno e per ogni volta che ti preoccupi per me.'],
+    ['LUCA','So che non siamo perfetti. E mi piaci così.'],
+    ['LUCA','Ok.'],
+    ['LUCA','Ora preparati, perché arriva la parte formaggiosa.'],
+    ['LUCA','Respira.'],
+    ['LUCA','Tu sei la cosa che sceglierei ogni volta.','acc'],
+    ['LUCA','In ogni versione di questa storia,','acc'],
+    ['LUCA','anche in quelle dove non ci sono le stelle della Val Ferret,','acc'],
+    ['LUCA','anche in quelle dove non lavoriamo nello stesso posto e non ci incrociamo mai...','acc'],
+    ['LUCA','io ti verrei comunque a cercare.','acc'],
+    ['LUCA','Fino a trovarti.','acc'],
+    ['LUCA','Ti amo.','silent'],
+    ['LUCA','Tu sei la cosa che sceglierei ogni volta. In ogni versione di questa storia, anche in quelle dove non ci sono le stelle della Val Ferret, anche in quelle dove non lavoriamo nello stesso posto e non ci incrociamo mai... io ti verrei comunque a cercare. Fino a trovarti. Ti amo.','full'],
+    ['LUCA','Fine della parte formaggiosa. Puoi respirare.'],
+    ['LUCA','Io un altro anno con te lo firmo anche adesso. Anzi, a proposito di firme...']
   ]
 }
 ];
@@ -1020,37 +1139,106 @@ function loop(){
   requestAnimationFrame(loop);
 }
 
+/* ================================================================
+   AUDIO — voci blip stile Animal Crossing (Web Audio, zero file)
+   ================================================================ */
+let AC=null, soundOn=true;
+function ensureAudio(){
+  if(!AC){
+    try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=null; }
+  }
+  if(AC && AC.state==='suspended') AC.resume();
+}
+function tone(freq, vol=0.1, dur=0.06, type='square', delay=0){
+  if(!AC || !soundOn) return;
+  const t=AC.currentTime+delay;
+  const o=AC.createOscillator(), g=AC.createGain();
+  o.type=type;
+  o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.0008, t+dur);
+  o.connect(g); g.connect(AC.destination);
+  o.start(t); o.stop(t+dur+0.03);
+}
+/* voce per personaggio: lei acuta, lui grave, narratore neutro */
+const VOICES={GIGIA:590, ROBERTA:590, LUCA:320, SPIDERSU:320, NARRATORE:445};
+function voiceBlip(name, quiet){
+  const base=VOICES[name]||445;
+  tone(base*(0.92+Math.random()*0.18), quiet?0.045:0.09, 0.05, 'square');
+}
+function chime(){ tone(523,0.07,0.14,'triangle'); tone(784,0.07,0.18,'triangle',0.09); }
+function buzz(){ tone(150,0.1,0.12,'sawtooth'); }
+function fanfare(){
+  tone(523,0.1,0.16,'triangle');
+  tone(659,0.1,0.16,'triangle',0.14);
+  tone(784,0.1,0.22,'triangle',0.28);
+  tone(1046,0.12,0.4,'triangle',0.46);
+}
+const sndBtn=document.getElementById('sndBtn');
+sndBtn.addEventListener('click', e=>{
+  e.stopPropagation();
+  ensureAudio();
+  soundOn=!soundOn;
+  sndBtn.textContent=soundOn?'🔊':'🔇';
+});
+
 /* ---- dialoghi ---- */
 function showDialog(){
   dlg.style.display='block';
   beat=0;
   speak();
 }
+let accBuf='';   /* frase formaggiosa che si accumula */
 function speak(){
   const st=STORY[stepIdx];
-  const [name,text]=st.dialogs[beat];
+  const entry=st.dialogs[beat];
+  const name=entry[0], text=entry[1], mode=entry[2]||'';
+  const isLetter=!!st.letter;
   dlgName.textContent=name;
   dlgName.style.background = name==='NARRATORE' ? '#57534c' : (name==='GIGIA'||name==='ROBERTA') ? '#d97757' : '#3d5a80';
-  fullText=text; charI=0; typing=true;
-  dlgText.textContent='';
   dlgNext.style.visibility='hidden';
   clearInterval(typeTimer);
+
+  if(mode==='full'){
+    /* frase intera ricomposta, mostrata tutta insieme */
+    accBuf='';
+    fullText=text; typing=false;
+    dlgText.textContent=text;
+    dlgNext.style.visibility='visible';
+    return;
+  }
+  if(mode!=='acc') accBuf='';
+  const prefix = mode==='acc' && accBuf ? accBuf+' ' : '';
+  dlgText.textContent=prefix;
+  fullText=text; charI=0; typing=true;
+
+  const speed = reduceMotion ? 2 : (isLetter ? 46 : 24);
+  const silent = mode==='silent';
   typeTimer=setInterval(()=>{
     if(charI<fullText.length){
-      dlgText.textContent+=fullText[charI++];
+      const ch=fullText[charI++];
+      dlgText.textContent+=ch;
+      if(!silent && ch!==' ' && charI%2===0) voiceBlip(name, isLetter);
     }else{
       clearInterval(typeTimer);
       typing=false;
+      if(mode==='acc') accBuf=prefix+fullText;
       dlgNext.style.visibility='visible';
     }
-  }, reduceMotion?2:24);
+  }, speed);
 }
 let contractOpen=false;
 function advance(){
+  ensureAudio();
   if(building || contractOpen || contractDone) return;
   if(typing){
+    const st=STORY[stepIdx];
+    const entry=st.dialogs[beat];
     clearInterval(typeTimer);
-    dlgText.textContent=fullText;
+    const mode=entry[2]||'';
+    const prefix = mode==='acc' && accBuf ? accBuf+' ' : (mode==='acc'?'':'');
+    dlgText.textContent=(mode==='acc'?prefix:'')+fullText;
+    if(mode==='acc') accBuf=(prefix)+fullText;
     typing=false;
     dlgNext.style.visibility='visible';
     return;
@@ -1064,6 +1252,8 @@ function advance(){
     stepIdx++;
     frame=0;
     beat=0;
+    accBuf='';
+    chime();
     speak();
   } else {
     /* fine storia → contratto */
@@ -1096,6 +1286,8 @@ const NO_TAUNTS=[
 let taunt=0;
 
 function dodgeNo(){
+  ensureAudio();
+  buzz();
   const rw=btnRow.clientWidth, rh=btnRow.clientHeight;
   const bw=btnNo.offsetWidth, bh=btnNo.offsetHeight;
   const nx=Math.random()*(rw-bw-8)+4;
@@ -1115,6 +1307,8 @@ function openContract(){
 }
 
 btnYes.addEventListener('click', ()=>{
+  ensureAudio();
+  fanfare();
   contract.style.display='none';
   contractDone=true;
   startCelebration();
