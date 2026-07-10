@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>anno_uno.exe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
   :root{
     --dark:#141110;
@@ -157,20 +160,21 @@
     display:inline-block;
     background:var(--coral);
     color:var(--white);
-    font-weight:bold;
-    font-size:13px;
+    font-family:'Press Start 2P', monospace;
+    font-size:9px;
     letter-spacing:1px;
-    padding:3px 12px;
+    padding:5px 10px;
     border:2px solid var(--ink);
     border-radius:4px;
     position:absolute;
-    top:-15px;left:14px;
+    top:-16px;left:14px;
   }
   #dlgText{
     color:var(--ink);
-    font-size:17px;
-    line-height:1.55;
-    min-height:48px;
+    font-family:'Press Start 2P', monospace;
+    font-size:11px;
+    line-height:1.9;
+    min-height:52px;
   }
   #dlgNext{
     position:absolute;right:14px;bottom:8px;
@@ -195,8 +199,8 @@
       bottom:calc(12px + env(safe-area-inset-bottom));
       padding:18px 20px 24px;
     }
-    #dlgText{ font-size:19px; line-height:1.6; min-height:64px; }
-    #dlgName{ font-size:14px; }
+    #dlgText{ font-size:12px; line-height:2; min-height:72px; }
+    #dlgName{ font-size:10px; }
     #dlgNext{ font-size:20px; bottom:10px; right:16px; }
     #hint{ display:none; }
   }
@@ -223,9 +227,11 @@
   #contractBox h1{
     background:var(--coral);
     color:var(--white);
-    font-size:13px;
+    font-family:'Press Start 2P', monospace;
+    font-size:9px;
+    line-height:1.7;
     letter-spacing:1px;
-    padding:10px 14px;
+    padding:12px 14px;
     border-bottom:4px solid var(--ink);
   }
   #clauses{
@@ -246,10 +252,9 @@
   .cbtn{
     position:absolute;
     top:26px;
-    font-family:inherit;
-    font-size:14px;
-    font-weight:bold;
-    padding:10px 20px;
+    font-family:'Press Start 2P', monospace;
+    font-size:9px;
+    padding:12px 14px;
     border:3px solid var(--ink);
     border-radius:5px;
     cursor:pointer;
@@ -263,9 +268,96 @@
     text-align:center;font-size:11px;color:#b05a3c;
     min-height:14px;
   }
+
+  /* ============ SCHERMATA INIZIALE ============ */
+  #startScreen{
+    position:fixed;inset:0;
+    z-index:60;
+    background:var(--dark);
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    gap:26px;
+    cursor:pointer;
+  }
+  #startScreen .cursor{width:14px;height:26px;}
+  #startTxt{
+    font-family:'Press Start 2P', monospace;
+    font-size:11px;
+    color:#8a6450;
+    letter-spacing:2px;
+    animation:blink 1.6s steps(1) infinite;
+    text-align:center;
+  }
+
+  /* ============ POLAROID ============ */
+  #polaroid{
+    position:fixed;inset:0;
+    z-index:55;
+    display:none;
+    align-items:center;justify-content:center;
+    background:rgba(20,17,16,.45);
+  }
+  #polaroidCard{
+    background:#faf6ee;
+    padding:14px 14px 18px;
+    box-shadow:0 12px 34px rgba(0,0,0,.55);
+    transform:rotate(-3deg);
+    animation:polDrop .7s cubic-bezier(.2,1.6,.4,1);
+    position:relative;
+  }
+  @keyframes polDrop{
+    from{transform:rotate(6deg) translateY(-60vh) scale(.8); opacity:0;}
+    to{transform:rotate(-3deg) translateY(0) scale(1); opacity:1;}
+  }
+  #polaroidCard::before{
+    content:"";
+    position:absolute;
+    top:-14px;left:50%;
+    transform:translateX(-50%) rotate(2deg);
+    width:90px;height:26px;
+    background:rgba(217,119,87,.45);
+    border-left:1px dashed rgba(0,0,0,.15);
+    border-right:1px dashed rgba(0,0,0,.15);
+  }
+  #polCanvas{
+    display:block;
+    width:min(66vw,300px);
+    height:min(66vw,300px);
+    image-rendering:pixelated;
+    background:#1b1815;
+  }
+  #polCap{
+    font-family:'Press Start 2P', monospace;
+    font-size:9px;
+    line-height:1.9;
+    color:#3d3a35;
+    text-align:center;
+    margin-top:14px;
+  }
+  #polHint{
+    position:absolute;
+    bottom:6vh;left:0;right:0;
+    text-align:center;
+    font-family:'Press Start 2P', monospace;
+    font-size:8px;
+    color:#c4bcae;
+  }
 </style>
 </head>
 <body>
+
+<div id="startScreen">
+  <span class="cursor"></span>
+  <div id="startTxt">TOCCA PER INIZIARE</div>
+</div>
+
+<div id="polaroid">
+  <div id="polaroidCard">
+    <canvas id="polCanvas" width="240" height="240"></canvas>
+    <div id="polCap">GIGIA ♥ SPIDERSU<br>29.08.2025 → ∞</div>
+  </div>
+  <div id="polHint">📸 salva questo momento · tocca per chiudere</div>
+</div>
 
 <div id="termWrap">
   <div id="terminal">
@@ -333,6 +425,12 @@ const REPORT = [
   ["livello amore", "[####################] 100%"]
 ];
 
+/* FOTO PER LA POLAROID FINALE:
+   per usare una vostra foto vera, incolla qui la stringa base64 dell'immagine
+   (formato: "data:image/jpeg;base64,....") al posto di null.
+   Se resta null, la polaroid mostra i due orsi pixel. */
+const FOTO_BASE64 = null;
+
 /* ================================================================
    FASE 1 — TERMINALE + CAOS
    ================================================================ */
@@ -362,7 +460,9 @@ function typeLine(text, cls='', speed=20){
     let i = 0;
     const t = setInterval(()=>{
       if(i < text.length){
-        cur.insertAdjacentText('beforebegin', text[i++]);
+        const ch = text[i++];
+        cur.insertAdjacentText('beforebegin', ch);
+        if(ch!==' ' && i%3===0) tone(950+Math.random()*450, 0.014, 0.028, 'square');
         scrollDown();
       } else {
         clearInterval(t);
@@ -383,8 +483,9 @@ const GLITCH = '▓▒░█@#$%&/\\{}<>~^*?!01';
 async function chaos(){
   term.classList.add('chaos');
   const lines = Array.from(screen.querySelectorAll('.line'));
-  // 1) corruzione dei caratteri
+  // 1) corruzione dei caratteri (con rumori glitch)
   const corrupt = setInterval(()=>{
+    tone(90+Math.random()*1400, 0.03, 0.05, 'sawtooth');
     for(let k=0;k<14;k++){
       const l = lines[Math.random()*lines.length|0];
       if(!l) continue;
@@ -404,25 +505,65 @@ async function chaos(){
   }, reduceMotion?60:45);
   await wait(2400);
   clearInterval(corrupt);
-  // 2) cancellazione violenta
-  const all = Array.from(screen.querySelectorAll('.line'));
-  for(let i=all.length-1;i>=0;i--){
-    all[i].remove();
-    if(i%2===0) await wait(28);
-  }
   term.classList.remove('chaos');
-  // 3) il vuoto: resta solo _
+  // 2) implosione: i caratteri vengono risucchiati dal cursore
+  screen.innerHTML='';
   term.classList.add('naked');
-  await wait(500);
+  await implode();
+  // 3) il vuoto: resta solo _
   termWrap.style.display='none';
   lonely.style.display='flex';
-  await wait(reduceMotion?800:2600);
+  await wait(reduceMotion?800:2400);
   lonely.style.display='none';
   startBuildIn();
 }
 
+/* i ricordi risucchiati verso il centro dello schermo */
+function implode(){
+  return new Promise(res=>{
+    if(reduceMotion){ res(); return; }
+    const ov=document.createElement('canvas');
+    ov.width=innerWidth; ov.height=innerHeight;
+    ov.style.cssText='position:fixed;inset:0;z-index:45;pointer-events:none;';
+    document.body.appendChild(ov);
+    const c=ov.getContext('2d');
+    const CX=innerWidth/2, CY=innerHeight/2;
+    const CHARS=GLITCH+'gigialuca<3valferret2925';
+    const parts=Array.from({length:300},()=>{
+      const a=Math.random()*Math.PI*2, r=(0.25+Math.random()*0.75)*Math.max(innerWidth,innerHeight)*0.55;
+      return {x:CX+Math.cos(a)*r, y:CY+Math.sin(a)*r, ch:CHARS[Math.random()*CHARS.length|0], d:Math.random()*0.35};
+    });
+    const T=62; let t=0;
+    tone(600,0.05,0.9,'sawtooth'); tone(300,0.05,0.9,'sawtooth',0.1);
+    const iv=setInterval(()=>{
+      t++;
+      c.clearRect(0,0,ov.width,ov.height);
+      c.font='13px Courier New';
+      for(const p of parts){
+        const k=Math.max(0, Math.min(1, (t/T - p.d)/(1-p.d)));
+        const e=k*k*(3-2*k); /* ease in-out */
+        const x=p.x+(CX-p.x)*e, y=p.y+(CY-p.y)*e;
+        c.fillStyle=`rgba(217,119,87,${1-e*0.9})`;
+        c.fillText(p.ch, x, y);
+      }
+      if(t>=T){
+        clearInterval(iv);
+        ov.remove();
+        res();
+      }
+    }, 16);
+  });
+}
+
 async function runTerminal(){
-  await wait(700);
+  await wait(500);
+  await typeLine('login: gigia', 'white', 70);
+  await wait(400);
+  await typeLine('password: ●●●●●●●●', 'white', 70);
+  await wait(600);
+  await typeLine('accesso consentito. bentornata, gigia.', 'dim', 26);
+  await wait(900);
+  await typeLine('', '', 1);
   await typeLine('spidersu@sottotetto:~$ ./anno_uno --report', 'hi', 45);
   await wait(600);
   await typeLine('analisi dell\'ultimo anno in corso...', 'dim', 32);
@@ -519,7 +660,7 @@ function px(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(x,y,w,h);}
 
 function pixelText(text,cx,y,size,color,align='center'){
   ctx.fillStyle=color;
-  ctx.font=`bold ${size}px 'Courier New', monospace`;
+  ctx.font=`${size}px 'Press Start 2P', 'Courier New', monospace`;
   ctx.textAlign=align;
   ctx.fillText(text,cx,y);
 }
@@ -550,6 +691,36 @@ function bgNight(f){
   mountain(40,GROUND,90,55,'#2a2620');
   mountain(200,GROUND,130,80,'#241f1a');
   groundLine('#6e6961');
+  /* lucciole */
+  for(let i=0;i<7;i++){
+    const fx=(i*53+Math.sin(f/40+i*2)*26+W)%W;
+    const fy=GROUND-14-((i*37)%60)-Math.sin(f/28+i)*7;
+    const glow=Math.sin(f/9+i*1.7);
+    if(glow>0.2){
+      ctx.fillStyle=`rgba(240,192,96,${glow*0.85})`;
+      ctx.fillRect(fx,fy,2,2);
+    }
+  }
+}
+/* tramonto per il 29 agosto */
+function bgSunset(f){
+  const bands=['#5a4a7a','#8a5570','#c06a68','#e08a5f','#f0aa6a'];
+  const bh=(GROUND)/bands.length;
+  bands.forEach((c,i)=>px(0,i*bh,W,bh+1,c));
+  /* sole basso */
+  px(W/2-11,GROUND-32,22,22,'#f7d9a0');
+  px(W/2-8,GROUND-35,16,3,'#f7d9a0');
+  /* nuvole in controluce */
+  ctx.fillStyle='rgba(90,74,122,.55)';
+  px(50+((f/12)%420)-40, 34, 30, 6, 'rgba(90,74,122,.55)');
+  px(210+((f/16)%440)-40, 58, 24, 5, 'rgba(90,74,122,.55)');
+  mountain(60,GROUND,100,60,'#3a3050');
+  mountain(240,GROUND,120,78,'#332a48');
+  px(0,GROUND,W,2,'#2a2338');
+  ctx.fillStyle='#2a2338';
+  for(let x=4;x<W;x+=14) ctx.fillRect(x,GROUND+6,4,2);
+  for(let x=10;x<W;x+=22) ctx.fillRect(x,GROUND+11,2,2);
+  px(0,GROUND+2,W,H-GROUND-2,'#241f33');
 }
 function mountain(cx, base, w, h, color){
   ctx.fillStyle=color;
@@ -604,7 +775,7 @@ function drawHouse(x,y,w,h,roofC,bodyC,label){
   px(x+w/2-6,y-16,12,16,'#3d3a35');      /* porta */
   px(x+8,y-h+8,10,8,'#f0c060');          /* finestra accesa */
   px(x+w-18,y-h+8,10,8,'#f0c060');
-  if(label) pixelText(label, x+w/2, y-h-30, 9, DAY_INK);
+  if(label) pixelText(label, x+w/2, y-h-30, 7, DAY_INK);
 }
 
 function drawBed(x,y){
@@ -692,11 +863,11 @@ function drawEnvelope(x,y,s,f){
 }
 
 function nameTag(text, x, y){
-  const w = text.length*6+8;
+  const w = text.length*7+10;
   px(x-w/2, y-10, w, 12, 'rgba(250,246,238,.92)');
   ctx.strokeStyle=DAY_INK; ctx.lineWidth=1;
   ctx.strokeRect(x-w/2, y-10, w, 12);
-  pixelText(text, x, y, 9, CORAL_DK);
+  pixelText(text, x, y-1, 7, CORAL_DK);
 }
 
 /* ================================================================
@@ -716,7 +887,7 @@ const STORY = [
     for(let i=0;i<7;i++) px(36+i*19, GROUND-78, 12, 8, '#b05a3c'); /* tettoia */
     px(52,GROUND-52,20,16,'#f0c060'); px(126,GROUND-52,20,16,'#f0c060');
     px(88,GROUND-24,22,24,'#3d3a35');
-    pixelText('STAGIONE 2025 · COURMAYEUR', 100, GROUND-84, 9, DAY_INK);
+    pixelText('STAGIONE 2025 · COURMAYEUR', 130, GROUND-84, 7, DAY_INK);
     /* bancone */
     px(190,GROUND-26,110,26,'#8a5a33'); px(190,GROUND-30,110,4,'#6b421f');
     /* piatti sul bancone */
@@ -763,7 +934,7 @@ const STORY = [
 { /* 2 — SECONDA NOTTE: NASCE SPIDERSU */
   bg: bgNight,
   draw(f,b){
-    pixelText('VAL FERRET · seconda salita', W/2, 26, 10, '#8a857a');
+    pixelText('VAL FERRET · seconda salita', W/2, 26, 8, '#8a857a');
     drawYaris(120, GROUND);
     if(b>=1){
       /* stelle che formano quasi una ragnatela sopra la macchina */
@@ -807,9 +978,9 @@ const STORY = [
   ]
 },
 { /* 4 — 29 AGOSTO: UFFICIALI */
-  bg: bgDay,
+  bg: bgSunset,
   draw(f,b){
-    pixelText('29 AGOSTO 2025', W/2, 26, 12, CORAL_DK);
+    pixelText('29 AGOSTO 2025', W/2, 26, 12, '#faf6ee');
     const himX=W/2-HIM_W-10, herX=W/2+10;
     drawBear(himX,HIM_Y,HIM_S,PAL_HIM,false,Math.sin(f/16)*1.2, f%120<6);
     drawBear(herX,HER_Y,HER_S,PAL_HER,true,Math.sin(f/16+2)*1.2, f%140<6);
@@ -833,7 +1004,7 @@ const STORY = [
 { /* 5 — FINE STAGIONE, DISTANZA */
   bg: bgDay,
   draw(f,b){
-    pixelText('10 SETTEMBRE 2025', W/2, 26, 10, DAY_INK);
+    pixelText('10 SETTEMBRE 2025', W/2, 26, 9, DAY_INK);
     drawHouse(30,GROUND,74,48,'#57534c','#c4bcae','CASA SUA');
     drawHouse(256,GROUND,74,48,'#b05a3c','#e8b89a','CASA SUA (di lei)');
     /* cuori che viaggiano tra le due case */
@@ -920,6 +1091,12 @@ const STORY = [
     px(0,GROUND-24,W,24,'#5db3c9');
     ctx.fillStyle='#8fd0df';
     for(let x=0;x<W;x+=20) px(x, GROUND-20+Math.sin((f+x)/16)*2, 12, 2, '#8fd0df');
+    /* scintillii sull'acqua */
+    for(let i=0;i<6;i++){
+      const gx=(i*61+f*0.6)%W;
+      const gl=Math.sin(f/7+i*2.3);
+      if(gl>0.55) px(gx, GROUND-22+((i*13)%18), 2, 2, `rgba(250,246,238,${gl})`);
+    }
     /* spiaggia */
     px(0,GROUND-2,W,H-GROUND+2,'#ecd9a8');
     /* ombrellone */
@@ -942,7 +1119,7 @@ const STORY = [
 { /* 9 — SERATE FILM + CENSURA */
   bg: bgNight,
   draw(f,b){
-    pixelText('UNA SERA QUALSIASI', W/2, 26, 10, '#8a857a');
+    pixelText('UNA SERA QUALSIASI', W/2, 26, 8, '#8a857a');
     /* stanza */
     px(20,GROUND-90,W-40,90,'#2a2620');
     /* tv con film */
@@ -971,7 +1148,7 @@ const STORY = [
       ctx.strokeStyle='#1a1917'; ctx.lineWidth=3;
       ctx.strokeRect(121,GROUND-77,148,50);
       pixelText('ALERT!', 195, GROUND-58, 13, '#1a1917');
-      pixelText('COSINE PER ADULTI', 195, GROUND-42, 10, '#1a1917');
+      pixelText('COSINE PER ADULTI', 195, GROUND-42, 8, '#1a1917');
       /* mutanda che vola ad arco */
       const t=(f%110)/110;
       const ux=130+t*130, uy=GROUND-84-Math.sin(t*Math.PI)*34;
@@ -997,7 +1174,7 @@ const STORY = [
     px(92,GROUND-76,176,22,'#f3ede1');
     ctx.strokeStyle='#1a1917'; ctx.lineWidth=2;
     ctx.strokeRect(93,GROUND-75,174,20);
-    pixelText('LA MAISON DE FILIPPO', 180, GROUND-61, 12, CORAL_DK);
+    pixelText('LA MAISON DE FILIPPO', 180, GROUND-61, 8, CORAL_DK);
     /* lanterne */
     px(80,GROUND-50,6,8,'#f0c060'); px(274,GROUND-50,6,8,'#f0c060');
     /* finestre calde */
@@ -1056,6 +1233,16 @@ const STORY = [
       const hs=2.6+Math.sin(f/11)*0.5;
       drawHeart(W/2-hs*2.5, GROUND-24*AV_S-24-Math.sin(f/11)*3, hs);
     }
+    /* vignettatura: la luce si stringe sull'avatar */
+    const v=Math.min(0.6, f/220*0.6);
+    if(v>0.02){
+      const cx=W/2, cy=GROUND-12*AV_S;
+      const g=ctx.createRadialGradient(cx,cy,55, cx,cy,250);
+      g.addColorStop(0,'rgba(0,0,0,0)');
+      g.addColorStop(1,`rgba(0,0,0,${v})`);
+      ctx.fillStyle=g;
+      ctx.fillRect(0,0,W,H);
+    }
   },
   dialogs:[
     ['LUCA','Il narratore di questa storia... ero io. Da sempre. E ho una lettera per te.'],
@@ -1100,17 +1287,123 @@ function startBuildIn(){
   STORY[0].bg(0);
   STORY[0].draw(0,0);
   ctx = realCtx;
-  /* ordine casuale dei blocchi 4x4 */
+  /* ordine dei blocchi: si espandono dal centro (dal cursore) con un po' di caos */
   const B=4;
   buildOrder=[];
-  for(let y=0;y<H;y+=B)for(let x=0;x<W;x+=B) buildOrder.push([x,y]);
-  for(let i=buildOrder.length-1;i>0;i--){
-    const j=Math.random()*(i+1)|0;
-    [buildOrder[i],buildOrder[j]]=[buildOrder[j],buildOrder[i]];
+  for(let y=0;y<H;y+=B)for(let x=0;x<W;x+=B){
+    const d=Math.hypot(x-W/2, y-H/2);
+    buildOrder.push([x,y, d + Math.random()*46]);
   }
+  buildOrder.sort((a,b)=>a[2]-b[2]);
   buildShown=0; building=true;
   ctx.fillStyle=NIGHT_BG; ctx.fillRect(0,0,W,H);
   requestAnimationFrame(loop);
+}
+
+/* ================================================================
+   ELEMENTI TOCCABILI + EFFETTI + TRANSIZIONI
+   ================================================================ */
+let fxHearts=[], fxNuggets=[], revealT=0;
+const REVEAL_FRAMES=26;
+
+/* zone toccabili per scena: {x,y,w,h,type} — type: hearts | nuggets | honk */
+const ZONES={
+  0:(f,b)=>[
+    {x:196,y:HIM_Y,w:HIM_W,h:16*HIM_S,type:'hearts'},
+    {x:262,y:HER_Y,w:HER_W,h:16*HER_S,type:'hearts'}
+  ],
+  1:(f,b)=>{
+    const z=[{x:120,y:GROUND-30,w:80,h:30,type:'honk'}];
+    if(b>=3) z.push({x:230,y:34,w:36,h:24,type:'nuggets'});
+    return z;
+  },
+  2:(f,b)=>[{x:120,y:GROUND-30,w:80,h:30,type:'honk'}],
+  3:(f,b)=>[
+    {x:248,y:HIM_Y,w:HIM_W,h:16*HIM_S,type:'hearts'},
+    {x:290,y:HER_Y,w:HER_W,h:16*HER_S,type:'hearts'}
+  ],
+  4:(f,b)=>[
+    {x:W/2-HIM_W-10,y:HIM_Y,w:HIM_W,h:16*HIM_S,type:'hearts'},
+    {x:W/2+10,y:HER_Y,w:HER_W,h:16*HER_S,type:'hearts'}
+  ],
+  6:(f,b)=>[{x:150,y:HIM_Y,w:HIM_W+HER_W+8,h:16*HIM_S,type:'hearts'}],
+  7:(f,b)=>[{x:150,y:HIM_Y,w:HIM_W+HER_W+8,h:16*HIM_S,type:'hearts'}],
+  8:(f,b)=>[{x:160,y:HIM_Y,w:HIM_W+HER_W+8,h:16*HIM_S,type:'hearts'}],
+  10:(f,b)=>[
+    {x:128,y:HIM_Y,w:HIM_W,h:16*HIM_S,type:'hearts'},
+    {x:206,y:HER_Y,w:HER_W,h:16*HER_S,type:'hearts'}
+  ],
+  11:(f,b)=>[
+    {x:W/2-HIM_W-8,y:HIM_Y,w:HIM_W,h:16*HIM_S,type:'hearts'},
+    {x:W/2+8,y:HER_Y,w:HER_W,h:16*HER_S,type:'hearts'}
+  ]
+};
+
+function triggerZone(z){
+  if(z.type==='hearts'){
+    tone(880,0.07,0.1,'sine'); tone(1174,0.06,0.14,'sine',0.06);
+    for(let i=0;i<7;i++){
+      fxHearts.push({x:z.x+z.w/2, y:z.y+6, vx:(Math.random()-0.5)*2.2, vy:-1.2-Math.random()*1.4, life:52, s:1.2+Math.random()*1.4});
+    }
+  } else if(z.type==='nuggets'){
+    tone(392,0.08,0.12,'square'); tone(494,0.08,0.14,'square',0.08);
+    for(let i=0;i<9;i++){
+      fxNuggets.push({x:z.x+4+Math.random()*(z.w-8), y:z.y+z.h, vy:0.5+Math.random()*0.9, life:200, r:Math.random()*2});
+    }
+  } else if(z.type==='honk'){
+    tone(330,0.12,0.14,'square'); tone(262,0.12,0.2,'square',0.13);
+  }
+}
+
+function drawFx(){
+  /* cuoricini che scoppiano */
+  fxHearts.forEach(h=>{
+    h.x+=h.vx; h.y+=h.vy; h.vy+=0.05; h.life--;
+    drawHeart(h.x, h.y, h.s, `rgba(217,119,87,${Math.max(0,h.life/52)})`);
+  });
+  fxHearts=fxHearts.filter(h=>h.life>0);
+  /* pioggia di nugget */
+  fxNuggets.forEach(n=>{
+    n.y+=n.vy; n.life--;
+    const c1='#e0a850', c2='#c9903a';
+    px(n.x, n.y, 5, 3, c1);
+    px(n.x+1, n.y-1, 3, 1, c1);
+    px(n.x+1+n.r, n.y+1, 2, 1, c2);
+    if(n.y>GROUND-2){ n.y=GROUND-2; n.vy=0; }
+  });
+  fxNuggets=fxNuggets.filter(n=>n.life>0);
+}
+
+function drawZoneTips(){
+  const zf=ZONES[stepIdx];
+  if(!zf) return;
+  const zones=zf(frame,beat);
+  /* stellina che pulsa sopra le zone toccabili */
+  if(frame%200<70){
+    const a=0.5+Math.sin(frame/6)*0.4;
+    for(const z of zones){
+      ctx.fillStyle=`rgba(237,162,131,${a})`;
+      ctx.font="8px 'Press Start 2P', monospace";
+      ctx.textAlign='center';
+      ctx.fillText('✦', z.x+z.w/2, z.y-6);
+    }
+  }
+  /* suggerimento una tantum nella prima scena */
+  if(stepIdx===0 && frame<520){
+    pixelText('✦ = tocca!', W/2, 40, 7, CORAL_DK);
+  }
+}
+
+function drawReveal(){
+  if(revealT<=0) return;
+  const k=revealT/REVEAL_FRAMES;
+  const B=12;
+  ctx.fillStyle=NIGHT_BG;
+  for(let y=0;y<H;y+=B)for(let x=0;x<W;x+=B){
+    const h=((x*7919+y*104729)%1000)/1000;
+    if(h<k) ctx.fillRect(x,y,B,B);
+  }
+  revealT--;
 }
 
 /* ---- ciclo principale ---- */
@@ -1136,6 +1429,9 @@ function loop(){
   const st=STORY[stepIdx];
   st.bg(frame);
   st.draw(frame,beat);
+  drawFx();
+  drawZoneTips();
+  drawReveal();
   requestAnimationFrame(loop);
 }
 
@@ -1182,10 +1478,31 @@ sndBtn.addEventListener('click', e=>{
   sndBtn.textContent=soundOn?'🔊':'🔇';
 });
 
+/* ---- musichetta chiptune di sottofondo (arpeggi generati, zero file) ---- */
+let musicTimer=null, musicStep=0;
+/* Cmaj7 → Am7 → Fmaj7 → G : giro dolce */
+const MEL_MAIN=[262,330,392,494, 220,262,330,392, 175,220,262,330, 196,247,294,392];
+const MEL_PARTY=[392,494,587,784, 440,523,659,880, 349,440,523,698, 392,494,587,784];
+function startMusic(kind){
+  stopMusic();
+  const mel = kind==='party' ? MEL_PARTY : MEL_MAIN;
+  const step = kind==='party' ? 210 : 265;
+  musicStep=0;
+  musicTimer=setInterval(()=>{
+    if(!AC || !soundOn) return;
+    const n=mel[musicStep%mel.length];
+    tone(n, 0.026, 0.3, 'triangle');
+    if(musicStep%4===0) tone(n/2, 0.018, 0.55, 'sine');
+    musicStep++;
+  }, step);
+}
+function stopMusic(){ clearInterval(musicTimer); musicTimer=null; }
+
 /* ---- dialoghi ---- */
 function showDialog(){
   dlg.style.display='block';
   beat=0;
+  startMusic('main');
   speak();
 }
 let accBuf='';   /* frase formaggiosa che si accumula */
@@ -1230,6 +1547,7 @@ function speak(){
 let contractOpen=false;
 function advance(){
   ensureAudio();
+  if(stage.style.display!=='flex') return;
   if(building || contractOpen || contractDone) return;
   if(typing){
     const st=STORY[stepIdx];
@@ -1253,6 +1571,9 @@ function advance(){
     frame=0;
     beat=0;
     accBuf='';
+    revealT=REVEAL_FRAMES;
+    fxHearts=[]; fxNuggets=[];
+    if(STORY[stepIdx].letter){ stopMusic(); }
     chime();
     speak();
   } else {
@@ -1261,7 +1582,27 @@ function advance(){
     openContract();
   }
 }
-document.getElementById('gameWrap').addEventListener('click', advance);
+document.getElementById('gameWrap').addEventListener('click', e=>{
+  /* tap sul box dialogo = avanza sempre */
+  if(e.target.closest('#dialog')){ advance(); return; }
+  /* tap sul canvas: prima controlla le zone toccabili */
+  if(stage.style.display==='flex' && !building && !contractOpen && !contractDone){
+    const rect=cv.getBoundingClientRect();
+    const mx=(e.clientX-rect.left)*W/rect.width;
+    const my=(e.clientY-rect.top)*H/rect.height;
+    const zf=ZONES[stepIdx];
+    if(zf){
+      for(const z of zf(frame,beat)){
+        if(mx>=z.x && mx<=z.x+z.w && my>=z.y-10 && my<=z.y+z.h){
+          ensureAudio();
+          triggerZone(z);
+          return; /* il tocco su un elemento non fa avanzare il dialogo */
+        }
+      }
+    }
+  }
+  advance();
+});
 document.addEventListener('keydown', e=>{
   if(e.key==='Enter'||e.key===' ') advance();
 });
@@ -1319,8 +1660,45 @@ function startCelebration(){
   dlg.style.display='none';
   stepIdx=STORY.length; /* fuori dalla storia */
   fireworks=[]; hearts=[];
+  startMusic('party');
+  setTimeout(showPolaroid, reduceMotion?1500:5200);
   celebrationLoop();
 }
+
+/* ---- polaroid ricordo ---- */
+const polaroid=document.getElementById('polaroid');
+const polCanvas=document.getElementById('polCanvas');
+function showPolaroid(){
+  const pc=polCanvas.getContext('2d');
+  if(FOTO_BASE64){
+    const img=new Image();
+    img.onload=()=>{
+      /* ritaglio quadrato centrale (cover) */
+      const s=Math.min(img.width,img.height);
+      pc.drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,240,240);
+      polaroid.style.display='flex';
+    };
+    img.src=FOTO_BASE64;
+  } else {
+    /* fallback: scena pixel dei due orsi */
+    const realCtx=ctx;
+    ctx=pc;
+    px(0,0,240,240,'#1b1815');
+    for(let i=0;i<40;i++){
+      ctx.fillStyle=`rgba(243,237,225,${0.3+Math.random()*0.7})`;
+      ctx.fillRect(Math.random()*240|0, Math.random()*150|0, 2, 2);
+    }
+    px(190,22,18,18,'#f3ede1'); px(184,16,12,12,'#1b1815');
+    px(0,196,240,44,'#12241a');
+    drawBear(52,196-16*4.4,4.4,PAL_HIM,false,0);
+    drawBear(128,196-16*3.8,3.8,PAL_HER,true,0);
+    drawHeart(106,196-16*4.4-26,4);
+    ctx=realCtx;
+    polaroid.style.display='flex';
+  }
+  tone(659,0.08,0.2,'triangle'); tone(880,0.08,0.3,'triangle',0.12);
+}
+polaroid.addEventListener('click', ()=>{ polaroid.style.display='none'; });
 function spawnFirework(){
   const cx=30+Math.random()*(W-60), cy=30+Math.random()*70;
   const colors=[CORAL,CORAL_HI,'#f0c060','#faf6ee'];
@@ -1346,13 +1724,31 @@ function celebrationLoop(){
   drawBear(herX,HER_Y,HER_S,PAL_HER,true,Math.sin(frame/14+2)*1.5);
   const hs=3.5+Math.sin(frame/10)*0.8;
   drawHeart(W/2-hs*2.5, HIM_Y-36, hs);
-  pixelText('CONTRATTO RINNOVATO ✓', W/2, 40, 16, CORAL_HI);
+  pixelText('CONTRATTO RINNOVATO', W/2, 40, 13, CORAL_HI);
   pixelText('GIGIA ♥ SPIDERSU', W/2, 62, 13, '#faf6ee');
-  pixelText('dal 29.08.2025 — a tempo indeterminato', W/2, 80, 9, '#c4bcae');
+  pixelText('dal 29.08.2025 - per sempre', W/2, 80, 8, '#c4bcae');
   requestAnimationFrame(celebrationLoop);
 }
 
-runTerminal();
+/* ---- avvio: schermata "tocca per iniziare" (sblocca audio iOS) ---- */
+const startScreen=document.getElementById('startScreen');
+let started=false;
+function startAll(){
+  if(started) return;
+  started=true;
+  ensureAudio();
+  chime();
+  if(document.fonts && document.fonts.load){
+    document.fonts.load("12px 'Press Start 2P'");
+  }
+  startScreen.style.transition='opacity .5s';
+  startScreen.style.opacity='0';
+  setTimeout(()=>{ startScreen.remove(); runTerminal(); }, 520);
+}
+startScreen.addEventListener('click', startAll);
+document.addEventListener('keydown', function once(e){
+  startAll();
+}, {once:true});
 </script>
 </body>
 </html>
