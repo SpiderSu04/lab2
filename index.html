@@ -2,8 +2,8 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>anno_uno.exe</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>anno_due.exe</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -16,6 +16,8 @@
     --ink:#3d3a35;
     --ink-soft:#57534c;
     --white:#faf6ee;
+    --blue:#3d5a80;
+    --vig:0;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   html,body{height:100%;}
@@ -24,12 +26,34 @@
     font-family:'Courier New', Courier, monospace;
     overflow:hidden;
     -webkit-user-select:none;user-select:none;
+    -webkit-tap-highlight-color:transparent;
   }
 
-  /* ============ TERMINALE ============ */
+  /* ============ SCHERMATA INIZIALE ============ */
+  #startScreen{
+    position:fixed;inset:0;
+    z-index:60;
+    background:var(--dark);
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    gap:26px;
+    cursor:pointer;
+  }
+  #startScreen .cursor{width:14px;height:26px;}
+  #startTxt{
+    font-family:'Press Start 2P', monospace;
+    font-size:11px;
+    color:#8a6450;
+    letter-spacing:2px;
+    animation:blink 1.6s steps(1) infinite;
+    text-align:center;
+  }
+
+  /* ============ TERMINALE (fase 1) ============ */
   #termWrap{
     position:fixed;inset:0;
     display:flex;align-items:center;justify-content:center;
+    z-index:20;
   }
   #terminal{
     width:min(780px,94vw);
@@ -96,65 +120,146 @@
     transition:opacity .8s;
   }
   #terminal.naked::after{opacity:0;}
-  /* il cursore solitario */
   #lonely{
     position:fixed;inset:0;
     display:none;align-items:center;justify-content:center;
     color:var(--coral);
     font-size:26px;
+    z-index:20;
   }
   #lonely .cursor{width:14px;height:26px;}
-  @media (prefers-reduced-motion: reduce){
-    #terminal.chaos{animation:none;}
+
+  /* ============ SFONDO SFOCATO (solo desktop, riempie i lati) ============ */
+  #bgBlur{
+    position:fixed;inset:0;
+    width:100vw;height:100vh;
+    object-fit:cover;
+    filter:blur(28px) brightness(.35);
+    transform:scale(1.12);
+    opacity:0;
+    transition:opacity .9s ease;
+    z-index:1;
+    pointer-events:none;
   }
 
-  /* ============ MONDO PIXEL ============ */
-  #sndBtn{
-    position:fixed;
-    top:calc(10px + env(safe-area-inset-top));
-    right:12px;
-    z-index:40;
-    background:rgba(20,17,16,.6);
-    border:2px solid #57534c;
-    border-radius:6px;
-    font-size:16px;
-    padding:6px 10px;
-    cursor:pointer;
-    color:#f3ede1;
-  }
+  /* ============ STAGE 9:16 ============ */
   #stage{
-    position:fixed;inset:0;
+    position:fixed;top:0;bottom:0;left:50%;transform:translateX(-50%);
+    height:100%;aspect-ratio:9/16;max-width:100vw;overflow:hidden;
+    z-index:2;
     display:none;
-    flex-direction:column;
-    align-items:center;justify-content:center;
     background:var(--dark);
   }
-  #gameWrap{
-    position:relative;
-    width:min(1000px,100vw);
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    height:100%;
-  }
-  #pixelCanvas{
-    display:block;
-    width:min(1000px,100vw);
+  #imgA,#imgB{
+    position:absolute;inset:0;width:100%;height:100%;
+    object-fit:cover;object-position:center top;
     image-rendering:pixelated;
+    opacity:0;transition:opacity .9s ease;
+    will-change:transform,opacity;
   }
+  /* Ken Burns — scala massima 1.10 */
+  .kb-zoom-in{animation:kbZoomIn 30s ease-in-out alternate infinite;}
+  .kb-zoom-out{animation:kbZoomOut 28s ease-in-out alternate infinite;}
+  .kb-pan-left{animation:kbPanLeft 32s ease-in-out alternate infinite;}
+  .kb-pan-right{animation:kbPanRight 34s ease-in-out alternate infinite;}
+  .kb-drift-up{animation:kbDriftUp 26s ease-in-out alternate infinite;}
+  @keyframes kbZoomIn{from{transform:scale(1);}to{transform:scale(1.10);}}
+  @keyframes kbZoomOut{from{transform:scale(1.10);}to{transform:scale(1);}}
+  @keyframes kbPanLeft{from{transform:scale(1.10) translateX(2.2%);}to{transform:scale(1.10) translateX(-2.2%);}}
+  @keyframes kbPanRight{from{transform:scale(1.10) translateX(-2.2%);}to{transform:scale(1.10) translateX(2.2%);}}
+  @keyframes kbDriftUp{from{transform:scale(1.10) translateY(2.2%);}to{transform:scale(1.10) translateY(-2.2%);}}
+  @media (prefers-reduced-motion: reduce){
+    #terminal.chaos{animation:none;}
+    .kb-zoom-in,.kb-zoom-out,.kb-pan-left,.kb-pan-right,.kb-drift-up{animation:none;}
+    #stage.pump{animation:none;}
+  }
+  /* "pompa" a tempo per la scena ADE */
+  #stage.pump #imgA.on, #stage.pump #imgB.on{animation:none;}
+  #imgA.on,#imgB.on{opacity:1;}
+
+  /* scrim sfumato dietro al dialogo */
+  #scrim{
+    position:absolute;left:0;right:0;bottom:0;
+    height:46%;
+    background:linear-gradient(180deg, rgba(20,17,16,0) 0%, rgba(20,17,16,.42) 45%, rgba(20,17,16,.78) 100%);
+    z-index:3;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .9s;
+  }
+
+  /* canvas effetti */
+  #fx{
+    position:absolute;inset:0;width:100%;height:100%;
+    z-index:4;
+    pointer-events:none;
+  }
+
+  /* vignettatura animabile */
+  #vignette{
+    position:absolute;inset:0;
+    z-index:5;
+    pointer-events:none;
+    background:radial-gradient(ellipse 78% 62% at 50% 42%, rgba(0,0,0,0) 46%, rgba(0,0,0,.92) 100%);
+    opacity:var(--vig);
+    transition:opacity 1.2s ease;
+  }
+
+  /* titolo scena */
+  #sceneTitle{
+    position:absolute;left:0;right:0;
+    top:calc(16px + env(safe-area-inset-top));
+    z-index:6;
+    text-align:center;
+    font-family:'Press Start 2P', monospace;
+    font-size:10px;
+    line-height:1.8;
+    color:var(--cream);
+    text-shadow:0 2px 0 rgba(0,0,0,.7), 0 0 14px rgba(0,0,0,.6);
+    letter-spacing:1px;
+    opacity:0;
+    pointer-events:none;
+    padding:0 10px;
+  }
+  #sceneTitle.show{animation:titleIn 4.4s ease forwards;}
+  @keyframes titleIn{
+    0%{opacity:0;transform:translateY(-18px);}
+    12%{opacity:1;transform:translateY(0);}
+    78%{opacity:1;}
+    100%{opacity:0;}
+  }
+
+  /* cartello CENSURA */
+  #censor{
+    position:absolute;left:50%;top:34%;
+    transform:translate(-50%,-50%) rotate(-2deg);
+    z-index:7;
+    background:#f0c060;
+    border:4px solid #1a1917;
+    box-shadow:0 5px 0 rgba(0,0,0,.5);
+    padding:16px 20px;
+    text-align:center;
+    font-family:'Press Start 2P', monospace;
+    color:#1a1917;
+    display:none;
+  }
+  #censor .a{font-size:16px;letter-spacing:2px;}
+  #censor .b{font-size:9px;margin-top:10px;letter-spacing:1px;}
+
   /* box dialogo stile pokemon */
   #dialog{
     position:absolute;
-    left:3%;right:3%;bottom:4%;
+    left:3.5%;right:3.5%;
+    bottom:calc(14px + env(safe-area-inset-bottom));
     background:var(--white);
     border:4px solid var(--ink);
     border-radius:6px;
     box-shadow:0 4px 0 rgba(0,0,0,.35), inset 0 0 0 2px var(--cream);
-    padding:14px 18px 18px;
-    min-height:84px;
+    padding:16px 18px 22px;
+    min-height:92px;
     cursor:pointer;
     display:none;
+    z-index:8;
   }
   #dlgName{
     display:inline-block;
@@ -176,6 +281,10 @@
     line-height:1.9;
     min-height:52px;
   }
+  #dialog.letter #dlgText{
+    max-height:34vh;
+    overflow-y:auto;
+  }
   #dlgNext{
     position:absolute;right:14px;bottom:8px;
     color:var(--coral);
@@ -183,26 +292,39 @@
     animation:bob 0.8s ease-in-out infinite;
   }
   @keyframes bob{50%{transform:translateY(3px);}}
-  #hint{
-    position:absolute;left:0;right:0;bottom:-24px;
-    text-align:center;color:#8a6450;font-size:12px;
+  @media (min-width:768px) and (min-aspect-ratio: 1/1){
+    #dlgText{font-size:12px;}
   }
 
-  /* ---- PORTRAIT / MOBILE: canvas grande in alto, dialogo ancorato in basso ---- */
-  @media (max-aspect-ratio: 1/1){
-    #pixelCanvas{
-      width:100vw;
-    }
-    #dialog{
-      position:fixed;
-      left:12px;right:12px;
-      bottom:calc(12px + env(safe-area-inset-bottom));
-      padding:18px 20px 24px;
-    }
-    #dlgText{ font-size:12px; line-height:2; min-height:72px; }
-    #dlgName{ font-size:10px; }
-    #dlgNext{ font-size:20px; bottom:10px; right:16px; }
-    #hint{ display:none; }
+  /* suggerimento zone toccabili (scena 0) */
+  #zoneHint{
+    position:absolute;left:0;right:0;
+    top:calc(52px + env(safe-area-inset-top));
+    z-index:6;
+    text-align:center;
+    font-family:'Press Start 2P', monospace;
+    font-size:8px;
+    color:var(--coral-hi);
+    text-shadow:0 2px 0 rgba(0,0,0,.7);
+    opacity:0;
+    transition:opacity .8s;
+    pointer-events:none;
+  }
+
+  /* ============ AUDIO TOGGLE ============ */
+  #sndBtn{
+    position:fixed;
+    top:calc(10px + env(safe-area-inset-top));
+    right:12px;
+    z-index:40;
+    background:rgba(20,17,16,.6);
+    border:2px solid #57534c;
+    border-radius:6px;
+    font-size:16px;
+    padding:6px 10px;
+    cursor:pointer;
+    color:#f3ede1;
+    display:none;
   }
 
   /* ============ CONTRATTO ============ */
@@ -262,32 +384,28 @@
   }
   .cbtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink);}
   #btnYes{left:8%;background:var(--coral);color:var(--white);}
-  #btnNo{right:8%;background:#dcd5c6;color:var(--ink);transition:left .12s, top .12s;}
+  #btnNo{right:8%;background:#dcd5c6;color:var(--ink);transition:left .12s, top .12s, transform .3s, opacity .3s;}
   #noMsg{
     position:absolute;left:0;right:0;bottom:4px;
     text-align:center;font-size:11px;color:#b05a3c;
     min-height:14px;
   }
 
-  /* ============ SCHERMATA INIZIALE ============ */
-  #startScreen{
-    position:fixed;inset:0;
-    z-index:60;
-    background:var(--dark);
-    display:flex;flex-direction:column;
-    align-items:center;justify-content:center;
-    gap:26px;
-    cursor:pointer;
-  }
-  #startScreen .cursor{width:14px;height:26px;}
-  #startTxt{
-    font-family:'Press Start 2P', monospace;
-    font-size:11px;
-    color:#8a6450;
-    letter-spacing:2px;
-    animation:blink 1.6s steps(1) infinite;
+  /* ============ FINALE ============ */
+  #finalTxt{
+    position:absolute;left:0;right:0;
+    top:20%;
+    z-index:9;
     text-align:center;
+    font-family:'Press Start 2P', monospace;
+    color:var(--white);
+    text-shadow:0 3px 0 rgba(0,0,0,.7), 0 0 20px rgba(0,0,0,.6);
+    display:none;
+    pointer-events:none;
   }
+  #finalTxt .t1{font-size:14px;color:var(--coral-hi);line-height:2;}
+  #finalTxt .t2{font-size:14px;line-height:2;}
+  #finalTxt .t3{font-size:8px;color:#e8ddc9;margin-top:8px;}
 
   /* ============ POLAROID ============ */
   #polaroid{
@@ -336,7 +454,7 @@
   }
   #polHint{
     position:absolute;
-    bottom:6vh;left:0;right:0;
+    bottom:calc(6vh + env(safe-area-inset-bottom));left:0;right:0;
     text-align:center;
     font-family:'Press Start 2P', monospace;
     font-size:8px;
@@ -351,14 +469,6 @@
   <div id="startTxt">TOCCA PER INIZIARE</div>
 </div>
 
-<div id="polaroid">
-  <div id="polaroidCard">
-    <canvas id="polCanvas" width="240" height="240"></canvas>
-    <div id="polCap">GIGIA ♥ SPIDERSU<br>29.08.2025 → ∞</div>
-  </div>
-  <div id="polHint">📸 salva questo momento · tocca per chiudere</div>
-</div>
-
 <div id="termWrap">
   <div id="terminal">
     <div id="titlebar">
@@ -371,29 +481,43 @@
 
 <div id="lonely"><span class="cursor"></span></div>
 
+<img id="bgBlur" alt="">
+
 <div id="stage">
-  <button id="sndBtn">🔊</button>
-  <div id="gameWrap">
-    <canvas id="pixelCanvas" width="360" height="260"></canvas>
-    <div id="dialog">
-      <span id="dlgName"></span>
-      <div id="dlgText"></div>
-      <span id="dlgNext">▼</span>
-    </div>
-    <div id="hint">clicca per continuare</div>
+  <img id="imgA" alt="">
+  <img id="imgB" alt="">
+  <div id="scrim"></div>
+  <canvas id="fx"></canvas>
+  <div id="vignette"></div>
+  <div id="sceneTitle"></div>
+  <div id="zoneHint">✦ = tocca!</div>
+  <div id="censor"><div class="a">ALERT!</div><div class="b">COSINE PER ADULTI</div></div>
+  <div id="finalTxt">
+    <div class="t1">CONTRATTO RINNOVATO</div>
+    <div class="t2">GIGIA ♥ SPIDERSU</div>
+    <div class="t3">dal 29.08.2025 · per sempre</div>
+  </div>
+  <div id="dialog">
+    <span id="dlgName"></span>
+    <div id="dlgText"></div>
+    <span id="dlgNext">▼</span>
   </div>
 </div>
+
+<button id="sndBtn">🔊</button>
 
 <div id="contract">
   <div id="contractBox">
     <h1>TERMINI E CONDIZIONI — CONTRATTO DI FIDANZAMENTO v2.0</h1>
     <div id="clauses">
       <p><span class="art">Art. 1</span> — Il presente contratto, stipulato in data 29.08.2025 tra le parti <b>GIGIA</b> e <b>SPIDERSU</b>, giunge alla sua naturale scadenza annuale e ne viene richiesto il rinnovo.</p>
-      <p><span class="art">Art. 2</span> — La parte GIGIA si impegna a continuare a vedere nugget nelle nuvole, padelle nelle stelle e qualsiasi altra forma utile a trattenere la controparte.</p>
+      <p><span class="art">Art. 2</span> — La parte GIGIA si impegna a continuare a vedere nugget nelle nuvole, padelle nelle stelle e qualsiasi altra forma utile a trattenere la controparte più a lungo del previsto.</p>
       <p><span class="art">Art. 3</span> — La parte SPIDERSU garantisce disponibilità illimitata per salite in Val Ferret a guardare le stelle, senza limiti di orario (validità estesa oltre le ore 3:00).</p>
       <p><span class="art">Art. 4</span> — Entrambe le parti si impegnano a un quantitativo minimo annuo di: film iniziati, pizze condivise, e attività di cui all'allegato censurato ("cosine per adulti").</p>
       <p><span class="art">Art. 5</span> — Le puzzette rilevate durante il periodo contrattuale restano di attribuzione contestata e non costituiscono motivo di recesso.</p>
-      <p><span class="art">Art. 6</span> — Il rinnovo è automatico e a tempo indeterminato. Il pulsante di rifiuto è presente esclusivamente per obbligo di legge.</p>
+      <p><span class="art">Art. 6</span> — Le difficoltà non sono escluse dal contratto: sono incluse, e si affrontano parlandone. Clausola già collaudata nel primo anno.</p>
+      <p><span class="art">Art. 7</span> — Il nome "Spidersu" resta in rubrica a tempo indeterminato. Ogni tentativo di modifica è nullo.</p>
+      <p><span class="art">Art. 8</span> — Il rinnovo è automatico e a tempo indeterminato. Il pulsante di rifiuto è presente esclusivamente per obbligo di legge.</p>
     </div>
     <div id="btnRow">
       <button class="cbtn" id="btnYes">ACCETTA E RINNOVA ♥</button>
@@ -403,36 +527,195 @@
   </div>
 </div>
 
+<div id="polaroid">
+  <div id="polaroidCard">
+    <canvas id="polCanvas" width="480" height="480"></canvas>
+    <div id="polCap">GIGIA ♥ SPIDERSU<br>29.08.2025 → ∞</div>
+  </div>
+  <div id="polHint">📸 salva questo momento · tocca per chiudere</div>
+</div>
+
 <script>
 /* ================================================================
-   CONFIG — testi modificabili
+   COSTANTI
    ================================================================ */
 const START_DATE = new Date(2025, 7, 29); // 29 agosto 2025
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const days = Math.max(1, Math.floor((Date.now() - START_DATE.getTime()) / 86400000));
+
+/* FOTO PER LA POLAROID FINALE:
+   per usare una vostra foto vera, incolla qui la stringa base64 dell'immagine
+   (formato: "data:image/jpeg;base64,....") al posto di null.
+   Se resta null, la polaroid mostra un ritaglio quadrato di s11.jpeg
+   (i due sulla panchina sotto le stelle). */
+const FOTO_BASE64 = null;
 
 const REPORT = [
   ["giorni ufficiali insieme", String(days)],
   ["notti in Val Ferret", "2 (fondamentali)"],
   ["stelle osservate", "14.892"],
   ["nuvole a forma di nugget", "1 (avvistamento confermato)"],
+  ["padelle avvistate in cielo", "1 (fonte: lei)"],
   ["pizze condivise", "87"],
   ["kcal totali di coppia", "847.000.000 (stima per difetto)"],
   ["ore di sonno di lei", "4.380 (media: tanta)"],
   ["puzzette rilevate", "6.021 (attribuzione: contestata)"],
   ["film iniziati", "112"],
   ["film finiti", "31"],
+  ["bottiglie d'acqua riempite", "365 (sempre da lei)"],
+  ["letti rifatti", "365 (sempre da lei)"],
   ["livello amore", "[####################] 100%"]
 ];
 
-/* FOTO PER LA POLAROID FINALE:
-   per usare una vostra foto vera, incolla qui la stringa base64 dell'immagine
-   (formato: "data:image/jpeg;base64,....") al posto di null.
-   Se resta null, la polaroid mostra i due orsi pixel. */
-const FOTO_BASE64 = null;
+const IMG_COUNT = 13;
+const IMG_PATH = i => 'assets/s' + i + '.jpeg';
 
 /* ================================================================
-   FASE 1 — TERMINALE + CAOS
+   AUDIO — Web Audio, zero file. Tutto passa da masterGain
+   così il tasto 🔇 abbassa davvero tutto in 200 ms.
+   ================================================================ */
+let AC = null, masterGain = null, soundOn = true;
+function ensureAudio(){
+  if(!AC){
+    try{
+      AC = new (window.AudioContext || window.webkitAudioContext)();
+      masterGain = AC.createGain();
+      masterGain.gain.value = 1;
+      masterGain.connect(AC.destination);
+    }catch(e){ AC = null; }
+  }
+  if(AC && AC.state === 'suspended') AC.resume();
+}
+function tone(freq, vol=0.1, dur=0.06, type='square', delay=0){
+  if(!AC || !soundOn) return;
+  const t = AC.currentTime + delay;
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+  o.connect(g); g.connect(masterGain);
+  o.start(t); o.stop(t + dur + 0.03);
+}
+/* voci blip stile Animal Crossing, con micro-random di pitch */
+const VOICES = {GIGIA:590, ROBERTA:590, LUCA:320, SPIDERSU:320, NARRATORE:445};
+function voiceBlip(name, quiet){
+  const base = VOICES[name] || 445;
+  tone(base * (0.92 + Math.random()*0.18), quiet ? 0.045 : 0.09, 0.05, 'square');
+}
+function chime(){ tone(523,0.07,0.14,'triangle'); tone(784,0.07,0.18,'triangle',0.09); }
+function buzz(){ tone(150,0.1,0.12,'sawtooth'); }
+function comicBuzz(){ tone(220,0.09,0.09,'sawtooth'); tone(160,0.09,0.12,'sawtooth',0.1); tone(110,0.1,0.2,'sawtooth',0.22); }
+function fanfare(){
+  tone(523,0.1,0.16,'triangle');
+  tone(659,0.1,0.16,'triangle',0.14);
+  tone(784,0.1,0.22,'triangle',0.28);
+  tone(1046,0.12,0.4,'triangle',0.46);
+}
+const sndBtn = document.getElementById('sndBtn');
+sndBtn.addEventListener('click', e=>{
+  e.stopPropagation();
+  ensureAudio();
+  soundOn = !soundOn;
+  sndBtn.textContent = soundOn ? '🔊' : '🔇';
+  if(AC && masterGain){
+    const t = AC.currentTime;
+    masterGain.gain.cancelScheduledValues(t);
+    masterGain.gain.setValueAtTime(masterGain.gain.value, t);
+    masterGain.gain.linearRampToValueAtTime(soundOn ? 1 : 0, t + 0.2);
+  }
+});
+
+/* ---- musica per atmosfera: calm / warm / club / party ----
+   Ogni giro passa da un proprio gain (musicGain) sotto masterGain:
+   il cambio è un crossfade di volume in 1,5 s, non uno stacco. */
+const MUSIC = {
+  calm:  {step:290, notes:[220,262,330,392, 196,247,294,370, 175,220,262,330, 165,196,247,330], bassEvery:4},
+  warm:  {step:255, notes:[262,330,392,494, 220,262,330,392, 175,220,262,330, 196,247,294,392], bassEvery:4},
+  club:  {step:170, notes:[220,220,330,220, 262,220,392,220, 208,208,330,208, 262,208,415,208], bassEvery:2},
+  party: {step:210, notes:[392,494,587,784, 440,523,659,880, 349,440,523,698, 392,494,587,784], bassEvery:4}
+};
+let musicTimer = null, musicStep = 0, musicKind = null, musicGain = null;
+let lastBeatTime = 0, beatStepMs = 500;
+function startMusic(kind){
+  if(musicKind === kind) return;
+  const old = musicGain, oldTimer = musicTimer;
+  if(old && AC){
+    const t = AC.currentTime;
+    old.gain.cancelScheduledValues(t);
+    old.gain.setValueAtTime(old.gain.value, t);
+    old.gain.linearRampToValueAtTime(0.0001, t + 1.5);
+    setTimeout(()=>{ clearInterval(oldTimer); try{ old.disconnect(); }catch(e){} }, 1600);
+  } else {
+    clearInterval(oldTimer);
+  }
+  musicTimer = null; musicKind = kind; musicGain = null;
+  if(!kind) return;
+  const m = MUSIC[kind];
+  beatStepMs = m.step;
+  musicStep = 0;
+  const mkGain = ()=>{
+    if(!AC) return null;
+    const g = AC.createGain();
+    g.gain.setValueAtTime(0.0001, AC.currentTime);
+    g.gain.linearRampToValueAtTime(1, AC.currentTime + 1.5);
+    g.connect(masterGain);
+    return g;
+  };
+  musicGain = AC ? mkGain() : null;
+  const myGain = musicGain;
+  musicTimer = setInterval(()=>{
+    if(!AC || !soundOn) return;
+    if(!myGain) return;
+    const n = m.notes[musicStep % m.notes.length];
+    lastBeatTime = performance.now();
+    mtone(myGain, n, 0.026, kind==='club' ? 0.16 : 0.3, 'triangle');
+    if(musicStep % m.bassEvery === 0){
+      mtone(myGain, n/2, kind==='club' ? 0.05 : 0.018, kind==='club' ? 0.22 : 0.55, kind==='club' ? 'sawtooth' : 'sine');
+    }
+    musicStep++;
+  }, m.step);
+}
+function mtone(dest, freq, vol, dur, type){
+  const t = AC.currentTime;
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+  o.connect(g); g.connect(dest);
+  o.start(t); o.stop(t + dur + 0.03);
+}
+function stopMusic(){ startMusic(null); }
+/* fase 0–1 del beat corrente (per laser/note/pump a tempo) */
+function beatPhase(){
+  if(!musicTimer) return (performance.now() % 500) / 500;
+  return Math.min(1, (performance.now() - lastBeatTime) / beatStepMs);
+}
+
+/* ================================================================
+   PRECARICAMENTO IMMAGINI — parte durante la fase terminale
+   ================================================================ */
+const IMGS = [];
+const imgLoaded = new Array(IMG_COUNT).fill(false);
+function preloadImages(){
+  for(let i=0; i<IMG_COUNT; i++){
+    const im = new Image();
+    im.onload = ()=>{ imgLoaded[i] = true; };
+    im.onerror = ()=>{ imgLoaded[i] = true; }; /* non bloccare mai la storia */
+    im.src = IMG_PATH(i);
+    IMGS.push(im);
+  }
+}
+function whenLoaded(i){
+  return new Promise(res=>{
+    if(imgLoaded[i]) { res(); return; }
+    const iv = setInterval(()=>{ if(imgLoaded[i]){ clearInterval(iv); res(); } }, 60);
+  });
+}
+
+/* ================================================================
+   FASE 1 — TERMINALE + CAOS + IMPLOSIONE
    ================================================================ */
 const screen = document.getElementById('screen');
 const term = document.getElementById('terminal');
@@ -483,7 +766,7 @@ const GLITCH = '▓▒░█@#$%&/\\{}<>~^*?!01';
 async function chaos(){
   term.classList.add('chaos');
   const lines = Array.from(screen.querySelectorAll('.line'));
-  // 1) corruzione dei caratteri (con rumori glitch)
+  /* 1) corruzione dei caratteri (con rumori glitch) */
   const corrupt = setInterval(()=>{
     tone(90+Math.random()*1400, 0.03, 0.05, 'sawtooth');
     for(let k=0;k<14;k++){
@@ -495,7 +778,6 @@ async function chaos(){
       l.textContent = t.slice(0,i) + GLITCH[Math.random()*GLITCH.length|0] + t.slice(i+1);
       if(Math.random()<0.15) l.classList.add('glitchy');
     }
-    // righe spazzatura
     if(Math.random()<0.5){
       let junk='';
       for(let j=0;j<40+Math.random()*30;j++) junk += GLITCH[Math.random()*GLITCH.length|0];
@@ -506,19 +788,20 @@ async function chaos(){
   await wait(2400);
   clearInterval(corrupt);
   term.classList.remove('chaos');
-  // 2) implosione: i caratteri vengono risucchiati dal cursore
+  /* 2) implosione: i caratteri vengono risucchiati verso il centro */
   screen.innerHTML='';
   term.classList.add('naked');
   await implode();
-  // 3) il vuoto: resta solo _
+  /* 3) il vuoto: resta solo _ */
   termWrap.style.display='none';
   lonely.style.display='flex';
   await wait(reduceMotion?800:2400);
+  /* non far partire la fase 2 prima che s0 e s1 siano pronte */
+  await whenLoaded(0); await whenLoaded(1);
   lonely.style.display='none';
-  startBuildIn();
+  startStory();
 }
 
-/* i ricordi risucchiati verso il centro dello schermo */
 function implode(){
   return new Promise(res=>{
     if(reduceMotion){ res(); return; }
@@ -541,7 +824,7 @@ function implode(){
       c.font='13px Courier New';
       for(const p of parts){
         const k=Math.max(0, Math.min(1, (t/T - p.d)/(1-p.d)));
-        const e=k*k*(3-2*k); /* ease in-out */
+        const e=k*k*(3-2*k);
         const x=p.x+(CX-p.x)*e, y=p.y+(CY-p.y)*e;
         c.fillStyle=`rgba(217,119,87,${1-e*0.9})`;
         c.fillText(p.ch, x, y);
@@ -556,6 +839,7 @@ function implode(){
 }
 
 async function runTerminal(){
+  preloadImages();
   await wait(500);
   await typeLine('login: gigia', 'white', 70);
   await wait(400);
@@ -585,665 +869,228 @@ async function runTerminal(){
 }
 
 /* ================================================================
-   FASE 2 — MONDO PIXEL
+   FASE 2 — MOTORE SCENE
+   stage 9:16, crossfade immagini, Ken Burns, dissolvenza a blocchi
    ================================================================ */
-const cv = document.getElementById('pixelCanvas');
-let ctx = cv.getContext('2d');
-const W = cv.width, H = cv.height;
-const GROUND = H - 34;
-
 const stage = document.getElementById('stage');
+const imgA = document.getElementById('imgA');
+const imgB = document.getElementById('imgB');
+const bgBlur = document.getElementById('bgBlur');
+const scrim = document.getElementById('scrim');
+const fx = document.getElementById('fx');
+const fxc = fx.getContext('2d');
+const sceneTitle = document.getElementById('sceneTitle');
+const zoneHint = document.getElementById('zoneHint');
+const censor = document.getElementById('censor');
 const dlg = document.getElementById('dialog');
 const dlgName = document.getElementById('dlgName');
 const dlgText = document.getElementById('dlgText');
 const dlgNext = document.getElementById('dlgNext');
-const hint = document.getElementById('hint');
 
-/* ---- palette: dino chrome × claude ---- */
-const DAY_BG = '#f3ede1', DAY_INK = '#57534c', DAY_GROUND = '#4a4440';
-const NIGHT_BG = '#1b1815', NIGHT_INK = '#d8d2c4';
-const CORAL = '#d97757', CORAL_DK = '#b05a3c', CORAL_HI = '#eda283';
+const KB_ALL = ['kb-zoom-in','kb-zoom-out','kb-pan-left','kb-pan-right','kb-drift-up'];
 
-/* ---- sprite orsi ---- */
-const BEAR=[
-".BB......BB.",
-"BbBB....BBbB",
-"BBBBBBBBBBBB",
-"BBBBBBBBBBBB",
-"BBkBBBBBBkBB",
-"BBBBmmmmBBBB",
-"pBBmmmmmmBBp",
-"BBBmmkkmmBBB",
-".BBBmmmmBBB.",
-".BBBBBBBBBB.",
-"BBBBBBBBBBBB",
-"BBBBBBBBBBBB",
-"BBBBBBBBBBBB",
-".BBBBBBBBBB.",
-".BBB....BBB.",
-".bbb....bbb."
-];
-const BOW=[[9,-1],[10,-1],[8,0],[9,0],[10,0],[11,0],[9,1],[10,1]];
-/* lui: grigio-dino / lei: corallo-claude */
-const PAL_HIM = {B:'#57534c', b:'#3d3a35', m:'#c4bcae', k:'#1a1917', p:'#6e6961'};
-const PAL_HER = {B:'#d97757', b:'#b05a3c', m:'#f3d9c8', k:'#241511', p:'#e89a7e'};
-const BOW_C = '#a33224';
-
-function drawBear(x, y, s, pal, bow, bob=0, blink=false){
-  const yy = y + Math.round(bob);
-  for(let r=0;r<BEAR.length;r++){
-    for(let c=0;c<12;c++){
-      let ch = BEAR[r][c];
-      if(ch==='.') continue;
-      if(blink && ch==='k' && r===4) ch='B';
-      ctx.fillStyle = pal[ch];
-      ctx.fillRect(x+c*s, yy+r*s, s, s);
-    }
-  }
-  if(bow){
-    ctx.fillStyle = BOW_C;
-    for(const [c,r] of BOW) ctx.fillRect(x+c*s, yy+r*s, s, s);
-  }
-}
-const HIM_S=3, HER_S=2.6;
-const HIM_W=12*HIM_S, HER_W=12*HER_S;
-const HIM_Y=GROUND-16*HIM_S, HER_Y=GROUND-16*HER_S;
-
-function drawHeart(x,y,s,color=CORAL){
-  const M=[".X.X.","XXXXX","XXXXX",".XXX.","..X.."];
-  ctx.fillStyle=color;
-  for(let r=0;r<5;r++)for(let c=0;c<5;c++)
-    if(M[r][c]==='X') ctx.fillRect(x+c*s,y+r*s,s,s);
-}
-
-function px(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(x,y,w,h);}
-
-function pixelText(text,cx,y,size,color,align='center'){
-  ctx.fillStyle=color;
-  ctx.font=`${size}px 'Press Start 2P', 'Courier New', monospace`;
-  ctx.textAlign=align;
-  ctx.fillText(text,cx,y);
-}
-
-/* ---- fondali ---- */
-const stars = Array.from({length:70},()=>({x:Math.random()*W|0, y:Math.random()*(GROUND-40)|0, t:Math.random()*100}));
-
-function bgDay(f){
-  px(0,0,W,H,DAY_BG);
-  /* montagne stile dino: triangoli scalinati */
-  mountain(30,GROUND,80,60,'#d9d1c0');
-  mountain(120,GROUND,110,86,'#cfc6b2');
-  mountain(250,GROUND,90,70,'#d9d1c0');
-  /* nuvole */
-  cloud(60+((f/9)%400)-40, 30);
-  cloud(230+((f/13)%420)-40, 52);
-  groundLine(DAY_GROUND);
-}
-function bgNight(f){
-  px(0,0,W,H,NIGHT_BG);
-  for(const s of stars){
-    const tw = Math.sin((f+s.t)/18) > -0.2 ? 0.95 : 0.25;
-    ctx.fillStyle = `rgba(243,237,225,${tw})`;
-    ctx.fillRect(s.x, s.y, 2, 2);
-  }
-  /* luna pixel */
-  px(W-50,16,16,16,'#f3ede1'); px(W-55,11,11,11,NIGHT_BG);
-  mountain(40,GROUND,90,55,'#2a2620');
-  mountain(200,GROUND,130,80,'#241f1a');
-  groundLine('#6e6961');
-  /* lucciole */
-  for(let i=0;i<7;i++){
-    const fx=(i*53+Math.sin(f/40+i*2)*26+W)%W;
-    const fy=GROUND-14-((i*37)%60)-Math.sin(f/28+i)*7;
-    const glow=Math.sin(f/9+i*1.7);
-    if(glow>0.2){
-      ctx.fillStyle=`rgba(240,192,96,${glow*0.85})`;
-      ctx.fillRect(fx,fy,2,2);
-    }
-  }
-}
-/* tramonto per il 29 agosto */
-function bgSunset(f){
-  const bands=['#5a4a7a','#8a5570','#c06a68','#e08a5f','#f0aa6a'];
-  const bh=(GROUND)/bands.length;
-  bands.forEach((c,i)=>px(0,i*bh,W,bh+1,c));
-  /* sole basso */
-  px(W/2-11,GROUND-32,22,22,'#f7d9a0');
-  px(W/2-8,GROUND-35,16,3,'#f7d9a0');
-  /* nuvole in controluce */
-  ctx.fillStyle='rgba(90,74,122,.55)';
-  px(50+((f/12)%420)-40, 34, 30, 6, 'rgba(90,74,122,.55)');
-  px(210+((f/16)%440)-40, 58, 24, 5, 'rgba(90,74,122,.55)');
-  mountain(60,GROUND,100,60,'#3a3050');
-  mountain(240,GROUND,120,78,'#332a48');
-  px(0,GROUND,W,2,'#2a2338');
-  ctx.fillStyle='#2a2338';
-  for(let x=4;x<W;x+=14) ctx.fillRect(x,GROUND+6,4,2);
-  for(let x=10;x<W;x+=22) ctx.fillRect(x,GROUND+11,2,2);
-  px(0,GROUND+2,W,H-GROUND-2,'#241f33');
-}
-function mountain(cx, base, w, h, color){
-  ctx.fillStyle=color;
-  const steps=8;
-  for(let i=0;i<steps;i++){
-    const ww = w*(1-i/steps);
-    ctx.fillRect(cx-ww/2, base-h*(i+1)/steps, ww, h/steps+1);
-  }
-  /* neve in punta */
-  ctx.fillStyle= color==='#241f1a'||color==='#2a2620' ? '#8a857a' : '#faf6ee';
-  const ww2=w*(1-6/steps);
-  ctx.fillRect(cx-ww2/2, base-h*7/steps, ww2, h/steps);
-  ctx.fillRect(cx-w*(1-7/steps)/2, base-h, w*(1-7/steps), h/steps+1);
-}
-function cloud(x,y){
-  ctx.fillStyle='#dfd8c8';
-  px(x,y,26,6,'#dfd8c8'); px(x+5,y-4,14,4,'#dfd8c8');
-}
-function groundLine(c){
-  px(0,GROUND,W,2,c);
-  ctx.fillStyle=c;
-  for(let x=4;x<W;x+=14) ctx.fillRect(x,GROUND+6,4,2);
-  for(let x=10;x<W;x+=22) ctx.fillRect(x,GROUND+11,2,2);
-}
-
-/* ---- oggetti ---- */
-function drawYaris(x,y){
-  /* toyota yaris 2005 vista laterale, con due orsi dentro */
-  px(x+6,y-26,64,14,'#b8b2a6');           /* cabina */
-  px(x,y-14,80,14,'#a29a8c');             /* corpo */
-  px(x+10,y-23,24,10,'#241f1a');          /* finestrino ant */
-  px(x+40,y-23,24,10,'#241f1a');          /* finestrino post */
-  /* testa di lui (guida, sinistra) */
-  px(x+14,y-22,8,7,PAL_HIM.B); px(x+13,y-24,3,3,PAL_HIM.B); px(x+20,y-24,3,3,PAL_HIM.B);
-  /* testa di lei (passeggero) + fiocco */
-  px(x+46,y-21,7,6,PAL_HER.B); px(x+45,y-23,3,3,PAL_HER.B); px(x+51,y-23,3,3,PAL_HER.B);
-  px(x+52,y-25,4,3,BOW_C);
-  /* fari e ruote */
-  px(x+76,y-12,4,4,'#f0c060');
-  wheel(x+16,y); wheel(x+60,y);
-}
-function wheel(x,y){ px(x,y-4,12,12,'#1a1917'); px(x+3,y-1,6,6,'#57534c'); }
-
-function drawHouse(x,y,w,h,roofC,bodyC,label){
-  px(x,y-h,w,h,bodyC);
-  ctx.fillStyle=roofC;
-  const steps=6;
-  for(let i=0;i<steps;i++){
-    const ww=w*(1-i/steps)+8;
-    ctx.fillRect(x+(w-ww)/2, y-h-(i+1)*4, ww, 4.5);
-  }
-  px(x+w/2-6,y-16,12,16,'#3d3a35');      /* porta */
-  px(x+8,y-h+8,10,8,'#f0c060');          /* finestra accesa */
-  px(x+w-18,y-h+8,10,8,'#f0c060');
-  if(label) pixelText(label, x+w/2, y-h-30, 7, DAY_INK);
-}
-
-function drawBed(x,y){
-  px(x,y-18,86,18,'#8a5a33');             /* struttura */
-  px(x-4,y-30,8,30,'#6b421f');            /* testiera */
-  px(x+2,y-24,80,10,'#faf6ee');           /* cuscini/materasso */
-  px(x+2,y-16,80,12,CORAL_DK);            /* coperta */
-  ctx.fillStyle=CORAL;
-  for(let i=0;i<5;i++) px(x+6+i*16,y-14,8,2,CORAL);
-}
-
-function drawSmoke(x,y,f,seed){
-  for(let i=0;i<4;i++){
-    const t=(f/2+i*22+seed)%90;
-    const sx=x+Math.sin((t+seed)/9)*5;
-    const sy=y-t*0.7;
-    if(sy>10){
-      ctx.fillStyle=`rgba(216,210,196,${1-t/90})`;
-      ctx.fillRect(sx,sy,3,3);
-    }
-  }
-}
-
-function drawUndies(x,y,s){
-  const M=["XXXXX","XwXwX",".XXX.",".X.X."];
-  const col={X:'#e05a8a', w:'#faf6ee'};
-  for(let r=0;r<4;r++)for(let c=0;c<5;c++){
-    const ch=M[r][c]; if(ch==='.')continue;
-    ctx.fillStyle=col[ch];
-    ctx.fillRect(x+c*s,y+r*s,s,s);
-  }
-}
-
-/* ---- avatar pixel di Luca: ciuffo, occhiali neri, pizzetto, polo, collanina ---- */
-const LUCA_SPR=[
-"....HHHHHHHH....",
-"..HHHHHHHHHHH...",
-".HHHHHHHHHHHHH..",
-".HHHHSSSSSSHHH..",
-".HHSSSSSSSSSHH..",
-".HGGGGGSSGGGGG..",
-".HGLLGGSSGGLLG..",
-".HSSSSSSSSSSSH..",
-"..SSSSSDDSSSS...",
-"..SSDSSSSSDSS...",
-"..SSDDDDDDDSS...",
-"...SSDDDDDSS....",
-"....SSSSSSS.....",
-"...PPPNNNNPPP...",
-"..PPPPPPPPPPPP..",
-".PPPPPPPPPPPPPP.",
-".SPPPPPPPPPPPPS.",
-".SPPPPPPPPPPPPS.",
-"..S.PPPPPPPP.S..",
-"....JJJJJJJJ....",
-"....JJJJ.JJJ....",
-"....JJJ..JJJ....",
-"....JJJ..JJJ....",
-"....kkk..kkk...."
-];
-const PAL_LUCA={H:'#6b4a2e', S:'#e6c19c', G:'#17161a', L:'#5a6a78', D:'#4f3a26', P:'#3d5a80', N:'#c9c2b4', J:'#33333d', k:'#1a1917'};
-const AV_S=2.4;
-function drawLuca(x,y,s,f){
-  const bob=Math.round(Math.sin(f/22)*1);
-  for(let r=0;r<LUCA_SPR.length;r++){
-    for(let c=0;c<16;c++){
-      const ch=LUCA_SPR[r][c];
-      if(ch==='.') continue;
-      ctx.fillStyle=PAL_LUCA[ch];
-      ctx.fillRect(x+c*s, y+bob+r*s, s, s);
-    }
-  }
-}
-function drawEnvelope(x,y,s,f){
-  const yy=y+Math.round(Math.sin(f/16)*2);
-  px(x,yy,16*s,10*s,'#faf6ee');
-  ctx.strokeStyle=CORAL_DK; ctx.lineWidth=s;
-  ctx.strokeRect(x,yy,16*s,10*s);
-  /* lembo della busta */
-  ctx.strokeStyle=CORAL;
-  ctx.beginPath();
-  ctx.moveTo(x,yy); ctx.lineTo(x+8*s,yy+5*s); ctx.lineTo(x+16*s,yy);
-  ctx.stroke();
-  drawHeart(x+6.5*s, yy+5.5*s, s*0.8);
-}
-
-function nameTag(text, x, y){
-  const w = text.length*7+10;
-  px(x-w/2, y-10, w, 12, 'rgba(250,246,238,.92)');
-  ctx.strokeStyle=DAY_INK; ctx.lineWidth=1;
-  ctx.strokeRect(x-w/2, y-10, w, 12);
-  pixelText(text, x, y-1, 7, CORAL_DK);
-}
-
-/* ================================================================
-   STORIA — motore a scene con dialoghi
-   beat = indice del dialogo corrente (per cambiare la scena a step)
-   ================================================================ */
-let frame=0, stepIdx=0, beat=0, typing=false, fullText='', charI=0, typeTimer=null;
-let hearts=[], fireworks=[], contractDone=false;
-
-const STORY = [
-{ /* 0 — LAVORO A COURMAYEUR */
-  bg: bgDay,
-  draw(f,b){
-    /* hotel/ristorante */
-    px(40,GROUND-70,120,70,'#e5ddcc');
-    ctx.fillStyle='#b05a3c';
-    for(let i=0;i<7;i++) px(36+i*19, GROUND-78, 12, 8, '#b05a3c'); /* tettoia */
-    px(52,GROUND-52,20,16,'#f0c060'); px(126,GROUND-52,20,16,'#f0c060');
-    px(88,GROUND-24,22,24,'#3d3a35');
-    pixelText('STAGIONE 2025 · COURMAYEUR', 130, GROUND-84, 7, DAY_INK);
-    /* bancone */
-    px(190,GROUND-26,110,26,'#8a5a33'); px(190,GROUND-30,110,4,'#6b421f');
-    /* piatti sul bancone */
-    px(210,GROUND-34,14,3,'#faf6ee'); px(240,GROUND-34,14,3,'#faf6ee'); px(270,GROUND-34,14,3,'#faf6ee');
-    /* orsi al lavoro */
-    const himX=196, herX=262;
-    drawBear(himX,HIM_Y,HIM_S,PAL_HIM,false, Math.sin(f/12)*1.5, f%130<6);
-    drawBear(herX,HER_Y,HER_S,PAL_HER,true, Math.sin(f/12+2)*1.5, f%150<6);
-    nameTag('LUCA', himX+HIM_W/2, HIM_Y-14);
-    nameTag('ROBERTA', herX+HER_W/2, HER_Y-14);
-    /* lei lo sbircia: cuoricino timido dal beat 2 */
-    if(b>=2 && f%80<40) drawHeart(herX+HER_W/2-5, HER_Y-34, 2, CORAL);
-  },
+/* dati scene — le altre arrivano nelle fasi successive del piano */
+const SCENES = [
+{ img:0, title:'STAGIONE 2025 · COURMAYEUR', kb:'kb-pan-right', music:'warm',
+  fx:['dust','sunbeam','steam'],
+  beamAt:{x:0.62,y:0.04}, steamAt:[[0.135,0.315],[0.215,0.310]],
+  zones:[
+    {x:0.28,y:0.26,w:0.22,h:0.28,type:'hearts'},
+    {x:0.56,y:0.30,w:0.34,h:0.48,type:'hearts'}
+  ],
   dialogs:[
-    ['NARRATORE','Estate 2025. Courmayeur. Due colleghi in stagione.'],
+    ['NARRATORE','Estate 2025. Courmayeur. Stagione aperta, due colleghi tra i tavoli.'],
+    ['NARRATORE','Lui portava i piatti. Lei stava alla macchina del caffè. Il resto è successo tra un giro e l\'altro.'],
     ['ROBERTA','Luca! Il tavolo 4 chiede ancora di te.'],
-    ['LUCA','Arrivo, arrivo. (...ma perché mi guarda sempre così?)'],
-    ['NARRATORE','"Parlocchiavano", come si dice.']
+    ['LUCA','Arrivo, arrivo. (...il tavolo 4 non ha chiesto niente, vero?)'],
+    ['ROBERTA','No. Ma volevo vedere se ti giravi.'],
+    ['NARRATORE','Si giró. Ogni volta.'],
+    ['NARRATORE','"Parlocchiavano", come si dice. Appuntamenti ai cassonetti, lavatrici scroccate, polo dimenticate in giro per mezza Courmayeur.']
   ]
 },
-{ /* 1 — PRIMA NOTTE IN VAL FERRET */
-  bg: bgNight,
-  draw(f,b){
-    pixelText('VAL FERRET', W/2, 26, 10, '#8a857a');
-    drawYaris(120, GROUND);
-    /* nuvola-nugget dal beat 3 */
-    if(b>=3){
-      ctx.fillStyle='#c4bcae';
-      px(238,44,22,10,'#c4bcae'); px(244,38,14,6,'#c4bcae'); px(234,48,6,6,'#c4bcae');
-      if(b===3 && f%60<30) pixelText('?', 250, 32, 12, CORAL_HI);
-    }
-    if(b>=4 && f%70<35) drawHeart(148, GROUND-42, 2, CORAL);
-  },
+{ img:1, title:'VAL FERRET · prima salita', kb:'kb-drift-up', music:'calm',
+  fx:['stars','shootingStar','fireflies'],
+  zones:[
+    {x:0.48,y:0.12,w:0.26,h:0.11,type:'nuggets'},
+    {x:0.42,y:0.40,w:0.34,h:0.22,type:'hearts'},
+    {x:0.06,y:0.55,w:0.80,h:0.16,type:'honk'}
+  ],
   dialogs:[
     ['NARRATORE','Una sera di luglio, Luca sale in alta valle a guardare le stelle. Roberta viene con lui.'],
-    ['NARRATORE','Toyota Yaris del 2005. Lui alla guida, lei di fianco. Il cielo sopra la Val Ferret.'],
+    ['NARRATORE','Toyota Yaris del 2005. Lui alla guida, lei di fianco. Sopra, tutta la Via Lattea della Val Ferret.'],
     ['ROBERTA','Quella stella lì sembra una padella. E quel gruppo... un carrello della spesa.'],
+    ['LUCA','È un carrello della spesa. Certo.'],
     ['ROBERTA','E quella nuvola... giuro, è identica a un nugget del McDonald\'s.'],
     ['LUCA','(Non ha alcun senso. Però non voglio andare via.)'],
-    ['NARRATORE','Rimasero lì fino alle 3 del mattino.'],
-    ['NARRATORE','(Solo molto tempo dopo lei confessò: le forme strane servivano a farlo restare più a lungo.)']
+    ['NARRATORE','Rimasero lì fino alle 3 del mattino. Poi fino alle 3 e mezza. Poi smisero di guardare l\'ora.'],
+    ['NARRATORE','(Solo molto tempo dopo lei confessò: le forme strane servivano a farlo restare più a lungo.)'],
+    ['NARRATORE','Funzionò. Funziona ancora.']
   ]
 },
-{ /* 2 — SECONDA NOTTE: NASCE SPIDERSU */
-  bg: bgNight,
-  draw(f,b){
-    pixelText('VAL FERRET · seconda salita', W/2, 26, 8, '#8a857a');
-    drawYaris(120, GROUND);
-    if(b>=1){
-      /* stelle che formano quasi una ragnatela sopra la macchina */
-      ctx.strokeStyle='rgba(237,162,131,.5)'; ctx.lineWidth=1;
-      ctx.beginPath();
-      ctx.moveTo(160,40); ctx.lineTo(150,60); ctx.lineTo(172,55); ctx.lineTo(160,40);
-      ctx.stroke();
-    }
-    if(b>=4){
-      pixelText('SPIDERSU', 160, 80, 14, CORAL_HI);
-      if(f%50<25) drawHeart(196, 66, 2, CORAL);
-    }
-  },
+{ img:2, title:'VAL FERRET · seconda salita', kb:'kb-zoom-in', music:'calm',
+  fx:['stars','shootingStar'], web:true,
+  zones:[
+    {x:0.20,y:0.38,w:0.60,h:0.24,type:'hearts'},
+    {x:0.05,y:0.64,w:0.90,h:0.24,type:'honk'}
+  ],
   dialogs:[
-    ['NARRATORE','Ci tornarono una seconda volta, sempre a luglio.'],
-    ['ROBERTA','Tu sei tipo... un mix tra Gesù e Spiderman.'],
+    ['NARRATORE','Ci tornarono una seconda volta, sempre a luglio. Stesso posto, stessa macchina, stesse forme assurde.'],
+    ['ROBERTA','Ok, ho deciso: tu sei tipo... un mix tra Gesù e Spiderman.'],
     ['LUCA','...in che senso, scusa?'],
-    ['ROBERTA','Gesùman? No. Spider-Gesù? Nemmeno. Aspetta... SPIDERSU!'],
-    ['NARRATORE','Nacque così il nome con cui lo salvò in rubrica. Per molto, molto tempo.']
+    ['ROBERTA','Gesùman? No, fa schifo. Spider-Gesù? Nemmeno. Aspetta.'],
+    ['ROBERTA','SPIDERSU!'],
+    ['LUCA','Non ti azzardare a salvarmi così in rubrica.'],
+    ['NARRATORE','Lo salvò così in rubrica. Per molto, molto tempo.']
   ]
 },
-{ /* 3 — IL SOTTOTETTO DI VILLAIR */
-  bg: bgDay,
-  draw(f,b){
-    pixelText('VILLAIR', W/2, 26, 10, DAY_INK);
-    /* casetta di legno con sottotetto */
-    drawHouse(120,GROUND,110,58,'#6b421f','#8a5a33');
-    /* finestrella del sottotetto nel tetto */
-    px(168,GROUND-58-14,14,10,'#f0c060');
-    const himX=248, herX=290;
-    drawBear(himX,HIM_Y,HIM_S,PAL_HIM,false,Math.sin(f/14)*1.2);
-    drawBear(herX,HER_Y,HER_S,PAL_HER,true,Math.sin(f/14+1)*1.2);
-    /* valigia di lei */
-    px(herX+HER_W+4,GROUND-14,14,14,CORAL_DK); px(herX+HER_W+8,GROUND-17,6,3,CORAL_DK);
-    if(b>=2 && f%60<30) drawHeart((himX+herX)/2+8, HIM_Y-16, 2);
-  },
+{ img:3, title:'VILLAIR · il sottotetto', kb:'kb-pan-left', music:'warm',
+  fx:['dust','sunbeam'], beamAt:{x:0.72,y:0.06},
+  zones:[
+    {x:0.30,y:0.28,w:0.38,h:0.44,type:'hearts'}
+  ],
   dialogs:[
     ['NARRATORE','Ad agosto, Roberta si trasferisce da lui: un vecchio sottotetto di legno, in un paesino chiamato Villair.'],
+    ['NARRATORE','Soffitto basso, scale ripide, una valigia che non si chiudeva più.'],
     ['ROBERTA','È... piccolo.'],
-    ['LUCA','È perfetto.']
+    ['LUCA','È perfetto.'],
+    ['ROBERTA','Dove metto le mie cose?'],
+    ['LUCA','...quello è un dettaglio tecnico.'],
+    ['NARRATORE','Il dettaglio tecnico occupò due mesi e mezzo. Nessuno si lamentò.']
   ]
 },
-{ /* 4 — 29 AGOSTO: UFFICIALI */
-  bg: bgSunset,
-  draw(f,b){
-    pixelText('29 AGOSTO 2025', W/2, 26, 12, '#faf6ee');
-    const himX=W/2-HIM_W-10, herX=W/2+10;
-    drawBear(himX,HIM_Y,HIM_S,PAL_HIM,false,Math.sin(f/16)*1.2, f%120<6);
-    drawBear(herX,HER_Y,HER_S,PAL_HER,true,Math.sin(f/16+2)*1.2, f%140<6);
-    const hs=3.5+Math.sin(f/10)*0.7;
-    drawHeart(W/2-hs*2.5, HIM_Y-34-Math.sin(f/10)*3, hs);
-    if(b>=2){
-      nameTag('SPIDERSU', himX+HIM_W/2, HIM_Y-14);
-      nameTag('GIGIA', herX+HER_W/2, HER_Y-14);
-    } else {
-      nameTag('LUCA', himX+HIM_W/2, HIM_Y-14);
-      nameTag('ROBERTA', herX+HER_W/2, HER_Y-14);
-    }
-  },
+{ img:4, title:'29 AGOSTO 2025', kb:'kb-zoom-out', music:'warm',
+  fx:['petals','fireflies'], breathe:true,
+  zones:[
+    {x:0.30,y:0.16,w:0.38,h:0.56,type:'hearts'}
+  ],
   dialogs:[
-    ['NARRATORE','29 agosto 2025. Diventa tutto ufficiale.'],
+    ['NARRATORE','29 agosto 2025. Tramonto. Fine turno.'],
+    ['NARRATORE','Niente discorso preparato, niente scaletta. Solo la domanda giusta al momento giusto.'],
     ['NARRATORE','E da quel giorno, non più Roberta e Luca...'],
     ['GIGIA','Gigia.'],
-    ['SPIDERSU','Spidersu.']
+    ['SPIDERSU','Spidersu.'],
+    ['NARRATORE','Ufficiali. Agli atti. Con testimoni: due montagne e un prato.']
   ]
 },
-{ /* 5 — FINE STAGIONE, DISTANZA */
-  bg: bgDay,
-  draw(f,b){
-    pixelText('10 SETTEMBRE 2025', W/2, 26, 9, DAY_INK);
-    drawHouse(30,GROUND,74,48,'#57534c','#c4bcae','CASA SUA');
-    drawHouse(256,GROUND,74,48,'#b05a3c','#e8b89a','CASA SUA (di lei)');
-    /* cuori che viaggiano tra le due case */
-    for(let i=0;i<3;i++){
-      const t=((f*1.2)+i*90)%260;
-      const x=104+t*0.55;
-      const y=GROUND-70-Math.sin(t/26)*16;
-      drawHeart(x,y,1.6, i%2?CORAL:CORAL_HI);
-    }
-    drawBear(52,HIM_Y+6,HIM_S*0.8,PAL_HIM,false,Math.sin(f/14)*1);
-    drawBear(284,HER_Y+8,HER_S*0.8,PAL_HER,true,Math.sin(f/14+1)*1);
-  },
+{ img:5, title:'10 SETTEMBRE 2025 · fine stagione', kb:'kb-drift-up', music:'calm',
+  fx:['bulbs','stars'], pathHearts:true,
+  bulbsAt:[
+    {x:0.305,y:0.390},{x:0.345,y:0.386},{x:0.385,y:0.390},{x:0.425,y:0.400},
+    {x:0.465,y:0.415},{x:0.505,y:0.428},{x:0.545,y:0.440},{x:0.585,y:0.450},
+    {x:0.625,y:0.456},{x:0.665,y:0.460},{x:0.700,y:0.462}
+  ],
+  zones:[],
   dialogs:[
-    ['NARRATORE','Il 10 settembre la stagione finisce. Ognuno torna a casa propria.'],
-    ['NARRATORE','Ma la distanza conta poco, quando ci si vede comunque.'],
-    ['NARRATORE','E poi... iniziano le avventure.']
+    ['NARRATORE','Il 10 settembre la stagione finisce. Si smonta tutto: divise, camere, turni.'],
+    ['NARRATORE','Ognuno torna a casa propria. E per la prima volta la sera non c\'è nessuno da aspettare sulle scale.'],
+    ['GIGIA','Quindi adesso?'],
+    ['SPIDERSU','Adesso ci si vede. È solo strada.'],
+    ['NARRATORE','E infatti la strada la fecero. Tante volte, avanti e indietro, senza mai chiamarla sacrificio.'],
+    ['NARRATORE','La distanza conta poco, quando entrambi si muovono. E poi... iniziano le avventure.']
   ]
 },
-{ /* 6 — LECCO */
-  bg: bgDay,
-  draw(f,b){
-    pixelText('LECCO', W/2, 26, 14, DAY_INK);
-    /* lago */
-    px(0,GROUND-18,W,18,'#7ba8b5');
-    ctx.fillStyle='#9cc2cc';
-    for(let x=6;x<W;x+=24) px(x, GROUND-14+Math.sin((f+x)/18)*2, 10, 2, '#9cc2cc');
-    mountain(280,GROUND-18,110,90,'#cfc6b2');
-    /* traghetto */
-    px(40+((f/6)%(W+60))-30, GROUND-30, 34, 10, '#faf6ee');
-    px(48+((f/6)%(W+60))-30, GROUND-36, 12, 6, CORAL_DK);
-    const bx=150;
-    drawBear(bx,HIM_Y,HIM_S,PAL_HIM,false,Math.sin(f/14)*1.2);
-    drawBear(bx+HIM_W+8,HER_Y,HER_S,PAL_HER,true,Math.sin(f/14+1)*1.2);
-    if(f%70<35) drawHeart(bx+HIM_W+2, HIM_Y-16, 2);
-  },
+{ img:6, title:'LECCO', kb:'kb-pan-right', music:'warm',
+  fx:['sparkle','dust'], sparkleBand:[0.40,0.55],
+  zones:[
+    {x:0.12,y:0.24,w:0.66,h:0.46,type:'hearts'},
+    {x:0.00,y:0.38,w:0.14,h:0.18,type:'wave'},
+    {x:0.80,y:0.38,w:0.20,h:0.18,type:'wave'}
+  ],
   dialogs:[
-    ['NARRATORE','Il giorno in cui lui la portò a Lecco.'],
-    ['GIGIA','Quindi è QUESTO il famoso ramo del lago di Como.']
+    ['NARRATORE','Il giorno in cui lui la portò a Lecco, a vedere il suo pezzo di lago.'],
+    ['GIGIA','Quindi è QUESTO il famoso ramo del lago di Como.'],
+    ['SPIDERSU','Quello è. Impressionata?'],
+    ['GIGIA','Molto. Però il gelato me lo offri comunque.'],
+    ['NARRATORE','Offrì il gelato. Da lì in poi, sempre.']
   ]
 },
-{ /* 7 — AMSTERDAM / ADE */
-  bg: bgNight,
-  draw(f,b){
-    pixelText('AMSTERDAM · ADE', W/2, 26, 12, '#c4bcae');
-    /* casette strette sui canali */
-    const cols=['#b05a3c','#57534c','#8a5a33','#6e6961','#d97757'];
-    for(let i=0;i<5;i++){
-      const hx=30+i*38, hh=54+(i%3)*10;
-      px(hx,GROUND-hh,30,hh,cols[i]);
-      px(hx+9,GROUND-hh-8,12,8,cols[i]);
-      px(hx+6,GROUND-hh+8,7,8,'#f0c060');
-      px(hx+18,GROUND-hh+8,7,8,'#f0c060');
-    }
-    /* canale */
-    px(0,GROUND+4,W,H-GROUND-4,'#2e3a42');
-    /* cassa che pompa */
-    const boom=1+((f%20)<4?1:0);
-    px(238,GROUND-28,26+boom*2,28,'#1a1917');
-    px(246,GROUND-22,10+boom,10+boom,'#57534c');
-    /* note musicali */
-    for(let i=0;i<3;i++){
-      const t=(f*1.4+i*40)%120;
-      pixelText('♪', 252+Math.sin(t/12)*10, GROUND-34-t*0.5, 10, i%2?CORAL:CORAL_HI);
-    }
-    const bx=150;
-    drawBear(bx,HIM_Y+((f%20)<10?0:-3),HIM_S,PAL_HIM,false,0);
-    drawBear(bx+HIM_W+8,HER_Y+((f%20)<10?-3:0),HER_S,PAL_HER,true,0);
-  },
+{ img:7, title:'AMSTERDAM · ADE', kb:'kb-zoom-in', music:'club',
+  fx:['laser','notes'], pump:true,
+  zones:[
+    {x:0.40,y:0.19,w:0.26,h:0.17,type:'bass'},
+    {x:0.24,y:0.44,w:0.52,h:0.38,type:'hearts'}
+  ],
   dialogs:[
-    ['NARRATORE','La vacanza ad Amsterdam per l\'ADE. Bassi a livelli non consentiti.'],
+    ['NARRATORE','Poi la vacanza ad Amsterdam per l\'ADE. Bassi a livelli non consentiti dalla legge italiana.'],
     ['SPIDERSU','SENTI CHE ROBA!'],
     ['GIGIA','COSA?!'],
     ['SPIDERSU','HO DETTO: SENTI CHE ROBA!'],
-    ['GIGIA','NON TI SENTO, C\'È TROPPA ROBA!']
+    ['GIGIA','NON TI SENTO, C\'È TROPPA ROBA!'],
+    ['NARRATORE','Continuarono a non sentirsi per sei ore. Fu una delle serate più belle dell\'anno.']
   ]
 },
-{ /* 8 — SARDEGNA */
-  bg: bgDay,
-  draw(f,b){
-    pixelText('SARDEGNA', W/2, 26, 14, DAY_INK);
-    /* sole */
-    px(W-56,20,18,18,'#f0c060');
-    /* mare */
-    px(0,GROUND-24,W,24,'#5db3c9');
-    ctx.fillStyle='#8fd0df';
-    for(let x=0;x<W;x+=20) px(x, GROUND-20+Math.sin((f+x)/16)*2, 12, 2, '#8fd0df');
-    /* scintillii sull'acqua */
-    for(let i=0;i<6;i++){
-      const gx=(i*61+f*0.6)%W;
-      const gl=Math.sin(f/7+i*2.3);
-      if(gl>0.55) px(gx, GROUND-22+((i*13)%18), 2, 2, `rgba(250,246,238,${gl})`);
-    }
-    /* spiaggia */
-    px(0,GROUND-2,W,H-GROUND+2,'#ecd9a8');
-    /* ombrellone */
-    ctx.fillStyle=CORAL;
-    for(let i=0;i<5;i++) px(96+i*10, GROUND-56+(i%2?3:0), 9, 6, i%2?CORAL:'#faf6ee');
-    px(118,GROUND-52,3,50,'#8a5a33');
-    const bx=160;
-    drawBear(bx,HIM_Y,HIM_S,PAL_HIM,false,Math.sin(f/16)*1);
-    drawBear(bx+HIM_W+8,HER_Y,HER_S,PAL_HER,true,Math.sin(f/16+1)*1);
-    /* granchietto */
-    const gx=60+Math.sin(f/30)*24;
-    px(gx,GROUND+8,8,5,CORAL_DK); px(gx-2,GROUND+6,2,2,CORAL_DK); px(gx+8,GROUND+6,2,2,CORAL_DK);
-  },
+{ img:8, title:'SARDEGNA', kb:'kb-pan-left', music:'warm',
+  fx:['sparkle','dust'], sparkleBand:[0.20,0.32],
+  zones:[
+    {x:0.58,y:0.59,w:0.20,h:0.11,type:'honk',hi:true},
+    {x:0.00,y:0.16,w:1.00,h:0.15,type:'wave'},
+    {x:0.06,y:0.28,w:0.86,h:0.28,type:'hearts'}
+  ],
   dialogs:[
-    ['NARRATORE','Il viaggio in Sardegna.'],
+    ['NARRATORE','Il viaggio in Sardegna. Acqua trasparente, ombrellone a righe, zero programmi.'],
     ['GIGIA','Spidersu... mi metti la crema?'],
-    ['SPIDERSU','(Miglior lavoro della mia vita.)']
+    ['SPIDERSU','(Miglior lavoro della mia vita.)'],
+    ['GIGIA','Anche sulla schiena, dai.'],
+    ['SPIDERSU','(Promosso. Con aumento.)'],
+    ['NARRATORE','Si addormentarono entrambi. Si scottarono entrambi. Rifarebbero tutto.']
   ]
 },
-{ /* 9 — SERATE FILM + CENSURA */
-  bg: bgNight,
-  draw(f,b){
-    pixelText('UNA SERA QUALSIASI', W/2, 26, 8, '#8a857a');
-    /* stanza */
-    px(20,GROUND-90,W-40,90,'#2a2620');
-    /* tv con film */
-    px(46,GROUND-64,44,30,'#1a1917');
-    px(50,GROUND-60,36,22, (f%40<20)?'#3d5a80':'#5a7aa0');
-    pixelText('FILM', 68, GROUND-46, 8, '#faf6ee');
-    /* letto con i due orsi abbracciati */
-    drawBed(150,GROUND);
-    /* teste che spuntano dalla coperta */
-    px(170,GROUND-30,12,10,PAL_HIM.B); px(168,GROUND-33,4,4,PAL_HIM.B); px(180,GROUND-33,4,4,PAL_HIM.B);
-    px(196,GROUND-28,10,9,PAL_HER.B); px(194,GROUND-31,4,4,PAL_HER.B); px(203,GROUND-31,4,4,PAL_HER.B);
-    px(204,GROUND-34,5,3,BOW_C);
-    if(b<=1){
-      /* fumo che sale */
-      drawSmoke(178,GROUND-36,f,0);
-      drawSmoke(200,GROUND-34,f,40);
-    }
-    if(b===2){
-      /* bacetti crescenti */
-      const n=1+Math.min(3, Math.floor((f%120)/30));
-      for(let i=0;i<n;i++) drawHeart(178+i*10, GROUND-46-i*6-Math.sin(f/8+i)*2, 1.6);
-    }
-    if(b>=3){
-      /* CENSURA */
-      px(120,GROUND-78,150,52,'#f0c060');
-      ctx.strokeStyle='#1a1917'; ctx.lineWidth=3;
-      ctx.strokeRect(121,GROUND-77,148,50);
-      pixelText('ALERT!', 195, GROUND-58, 13, '#1a1917');
-      pixelText('COSINE PER ADULTI', 195, GROUND-42, 8, '#1a1917');
-      /* mutanda che vola ad arco */
-      const t=(f%110)/110;
-      const ux=130+t*130, uy=GROUND-84-Math.sin(t*Math.PI)*34;
-      drawUndies(ux,uy,3);
-    }
-  },
+{ img:9, title:'UNA SERA QUALSIASI', kb:'kb-zoom-out', music:'calm',
+  fx:['bulbs','tvFlicker','steam'], censorAt:4, censorOff:6,
+  bulbsAt:[
+    {x:0.035,y:0.185},{x:0.095,y:0.160},{x:0.155,y:0.125},{x:0.220,y:0.095},
+    {x:0.285,y:0.070},{x:0.350,y:0.060},{x:0.415,y:0.085},{x:0.450,y:0.140},
+    {x:0.462,y:0.200},{x:0.472,y:0.260}
+  ],
+  tvZone:[0.70,0.285,0.22,0.14],
+  steamAt:[[0.150,0.610]],
+  zones:[
+    {x:0.68,y:0.26,w:0.26,h:0.18,type:'tv'},
+    {x:0.16,y:0.24,w:0.62,h:0.42,type:'hearts'}
+  ],
   dialogs:[
-    ['NARRATORE','E poi le sere così: un film, l\'abbraccio, il fumo che sale piano.'],
+    ['NARRATORE','E poi le sere così: un film, le lucine accese, l\'abbraccio, il fumo che sale piano.'],
     ['GIGIA','Questo film non lo finiamo neanche stavolta, vero?'],
     ['SPIDERSU','Assolutamente no.'],
+    ['GIGIA','Lo sapevo.'],
     ['NARRATORE','⚠ SEGNALE INTERROTTO PER MOTIVI DI "COSINE PER ADULTI" ⚠'],
-    ['NARRATORE','(Il traghetto delle mutande ringrazia per l\'attenzione.)']
+    ['NARRATORE','(Il traghetto delle mutande ringrazia per l\'attenzione.)'],
+    ['NARRATORE','Statistica ufficiale: 112 film iniziati, 31 finiti. Nessun rimpianto.']
   ]
 },
-{ /* 10 — LA MAISON DE FILIPPO */
-  bg: bgNight,
-  draw(f,b){
-    /* locanda di montagna */
-    px(70,GROUND-84,220,84,'#6b421f');
-    ctx.fillStyle='#3d2a16';
-    for(let i=0;i<8;i++) px(60+i*31, GROUND-96+(i%2?2:0), 26, 10, '#3d2a16'); /* tetto */
-    /* insegna GRANDE e leggibile */
-    px(92,GROUND-76,176,22,'#f3ede1');
-    ctx.strokeStyle='#1a1917'; ctx.lineWidth=2;
-    ctx.strokeRect(93,GROUND-75,174,20);
-    pixelText('LA MAISON DE FILIPPO', 180, GROUND-61, 8, CORAL_DK);
-    /* lanterne */
-    px(80,GROUND-50,6,8,'#f0c060'); px(274,GROUND-50,6,8,'#f0c060');
-    /* finestre calde */
-    px(104,GROUND-44,18,14,'#f0c060'); px(238,GROUND-44,18,14,'#f0c060');
-    px(160,GROUND-30,40,30,'#3d2a16'); /* porta */
-    /* i due orsi davanti */
-    drawBear(128,HIM_Y+4,HIM_S*0.9,PAL_HIM,false,Math.sin(f/14)*1);
-    drawBear(206,HER_Y+5,HER_S*0.9,PAL_HER,true,Math.sin(f/14+1)*1);
-    if(f%60<30) drawHeart(176, HIM_Y-6, 2);
-    pixelText('ENTRÈVES', W/2, 26, 9, '#8a857a');
-  },
+{ img:10, title:'ENTRÈVES · La Maison de Filippo', kb:'kb-drift-up', music:'warm',
+  fx:['bulbs','snowDust','steam'],
+  bulbsAt:[
+    {x:0.755,y:0.385},{x:0.150,y:0.500},{x:0.500,y:0.480},{x:0.795,y:0.470}
+  ],
+  steamAt:[[0.930,0.085]],
+  zones:[
+    {x:0.20,y:0.40,w:0.52,h:0.44,type:'hearts'}
+  ],
   dialogs:[
     ['NARRATORE','E una cena alla locanda: La Maison de Filippo, a Entrèves.'],
+    ['NARRATORE','Quel posto dove non ordini: ti portano tutto e tu resisti finché puoi.'],
     ['GIGIA','Ho fame per tre.'],
-    ['SPIDERSU','Sei nel posto giusto.']
+    ['SPIDERSU','Sei nel posto giusto.'],
+    ['NARRATORE','Uscirono camminando piano, tenendosi per mano, in silenzio. Il silenzio buono.']
   ]
 },
-{ /* 11 — UN ANNO DOPO: transizione alla lettera */
-  bg: bgNight,
-  draw(f,b){
-    pixelText('UN ANNO DOPO', W/2, 26, 12, '#c4bcae');
-    const himX=W/2-HIM_W-8, herX=W/2+8;
-    drawBear(himX,HIM_Y,HIM_S,PAL_HIM,false,Math.sin(f/16)*1.2, f%130<6);
-    drawBear(herX,HER_Y,HER_S,PAL_HER,true,Math.sin(f/16+2)*1.2, f%150<6);
-    const hs=3+Math.sin(f/12)*0.6;
-    drawHeart(W/2-hs*2.5, HIM_Y-32, hs);
-    /* stella cadente ogni tanto */
-    const t=f%160;
-    if(t<40){ px(40+t*3,30+t*1.2,3,2,'#faf6ee'); px(34+t*3,27+t*1.2,6,1,'rgba(250,246,238,.4)'); }
-  },
+{ img:11, title:'UN ANNO DOPO', kb:'kb-zoom-in', music:'calm',
+  fx:['stars','shootingStar','fireflies'],
+  zones:[
+    {x:0.24,y:0.40,w:0.54,h:0.34,type:'hearts'}
+  ],
   dialogs:[
-    ['NARRATORE','E così, tra stelle, nugget e sottotetti, è passato un anno intero.'],
+    ['NARRATORE','E così, tra stelle, nugget, sottotetti e film mai finiti, è passato un anno intero.'],
+    ['NARRATORE','Un anno di cassonetti, di strade, di partenze e ritorni. Di cose belle e di cose difficili.'],
     ['NARRATORE','E questa, in breve, è la nostra storia.'],
     ['NARRATORE','Ma prima dell\'ultima formalità... c\'è una cosa che vorrei dirti io.'],
-    ['NARRATORE','Senza orsi di mezzo.']
+    ['NARRATORE','Senza narratore di mezzo.']
   ]
 },
-{ /* 12 — LA LETTERA (l'avatar di Luca si rivela) */
-  bg: bgNight,
-  letter:true,     /* testo più lento, voce più bassa */
-  tiAmoBeat:21,    /* indice del beat "Ti amo." */
-  draw(f,b){
-    /* Val Ferret di notte, silenziosa */
-    pixelText('VAL FERRET', W/2, 26, 9, '#8a857a');
-    /* i due orsi, piccoli, seduti in disparte a guardare */
-    drawBear(18, GROUND-16*2, 2, PAL_HIM, false, 0);
-    drawBear(48, GROUND-16*1.8, 1.8, PAL_HER, true, 0);
-    /* l'avatar al centro */
-    drawLuca(W/2-8*AV_S, GROUND-24*AV_S, AV_S, f);
-    /* la busta, dal secondo beat */
-    if(b>=1) drawEnvelope(W/2+8*AV_S+8, GROUND-24*AV_S+14, 2, f);
-    /* sul "Ti amo": stella cadente + cuore grande */
-    if(b>=this.tiAmoBeat){
-      const t=f%140;
-      if(t<44){ px(30+t*3.4,24+t*1.1,3,2,'#faf6ee'); px(23+t*3.4,21+t*1.1,7,1,'rgba(250,246,238,.45)'); }
-      const hs=2.6+Math.sin(f/11)*0.5;
-      drawHeart(W/2-hs*2.5, GROUND-24*AV_S-24-Math.sin(f/11)*3, hs);
-    }
-    /* vignettatura: la luce si stringe sull'avatar */
-    const v=Math.min(0.6, f/220*0.6);
-    if(v>0.02){
-      const cx=W/2, cy=GROUND-12*AV_S;
-      const g=ctx.createRadialGradient(cx,cy,55, cx,cy,250);
-      g.addColorStop(0,'rgba(0,0,0,0)');
-      g.addColorStop(1,`rgba(0,0,0,${v})`);
-      ctx.fillStyle=g;
-      ctx.fillRect(0,0,W,H);
-    }
-  },
+{ img:12, title:null, kb:null, music:null, letter:true, tiAmoBeat:21, vig:0.6,
+  fx:[],
+  zones:[],
   dialogs:[
     ['LUCA','Il narratore di questa storia... ero io. Da sempre. E ho una lettera per te.'],
     ['LUCA','Gigia. Un anno fa, il primo luglio alle 23:23, ti scrivevo il primo messaggio: "Io roby ci sono". Seguito da "(sono Luca nel caso non avessi salvato il numero)". Un maestro del rimorchio, fin da subito.'],
@@ -1274,481 +1121,965 @@ const STORY = [
 }
 ];
 
-/* ---- effetto costruzione iniziale (pixel che arrivano) ---- */
-let building=false, buildOrder=[], buildShown=0, buildBuf=null;
+/* ---- dimensionamento canvas fx (device pixel, DPR cappato a 2) ---- */
+let fxW = 0, fxH = 0;
+function sizeFx(){
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const r = stage.getBoundingClientRect();
+  fxW = Math.max(1, Math.round(r.width * dpr));
+  fxH = Math.max(1, Math.round(r.height * dpr));
+  fx.width = fxW; fx.height = fxH;
+}
+window.addEventListener('resize', ()=>{ sizeFx(); });
+window.addEventListener('orientationchange', ()=>{ setTimeout(sizeFx, 300); });
 
-function startBuildIn(){
-  stage.style.display='flex';
-  /* renderizza il primo frame della scena 0 in un buffer */
-  buildBuf = document.createElement('canvas');
-  buildBuf.width=W; buildBuf.height=H;
-  const realCtx = ctx;
-  ctx = buildBuf.getContext('2d');
-  STORY[0].bg(0);
-  STORY[0].draw(0,0);
-  ctx = realCtx;
-  /* ordine dei blocchi: si espandono dal centro (dal cursore) con un po' di caos */
-  const B=4;
-  buildOrder=[];
-  for(let y=0;y<H;y+=B)for(let x=0;x<W;x+=B){
-    const d=Math.hypot(x-W/2, y-H/2);
-    buildOrder.push([x,y, d + Math.random()*46]);
+/* ================================================================
+   DISSOLVENZA A BLOCCHI (pixel dissolve)
+   blocchi 14 px in ordine pseudo-casuale: copri ~18f, scopri ~22f
+   ================================================================ */
+const COVER_F = 18, REVEAL_F = 22;
+let trans = null; /* {mode:'cover'|'hold'|'reveal', t, target, after} */
+
+function blockHash(cx, cy){
+  return ((cx*7919 + cy*104729 + (cx^cy)*263) % 1000) / 1000;
+}
+function drawBlocks(k, inverse){
+  /* k in 0–1: frazione di blocchi coperti */
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const B = Math.max(8, Math.round(14 * dpr));
+  fxc.fillStyle = '#141110';
+  const cols = Math.ceil(fxW / B), rows = Math.ceil(fxH / B);
+  for(let cy=0; cy<rows; cy++){
+    for(let cx=0; cx<cols; cx++){
+      const h = blockHash(cx, cy);
+      const covered = inverse ? (h > 1 - k) : (h < k);
+      if(covered) fxc.fillRect(cx*B, cy*B, B, B);
+    }
   }
-  buildOrder.sort((a,b)=>a[2]-b[2]);
-  buildShown=0; building=true;
-  ctx.fillStyle=NIGHT_BG; ctx.fillRect(0,0,W,H);
-  requestAnimationFrame(loop);
+}
+
+let frontIsA = true;
+function frontImg(){ return frontIsA ? imgA : imgB; }
+function backImg(){ return frontIsA ? imgB : imgA; }
+
+function applyScene(i){
+  const sc = SCENES[i];
+  const back = backImg(), front = frontImg();
+  back.src = IMGS[sc.img] ? IMGS[sc.img].src : IMG_PATH(sc.img);
+  back.className = '';
+  if(!reduceMotion && sc.kb) back.classList.add(sc.kb);
+  back.classList.add('on');
+  front.classList.remove('on');
+  frontIsA = !frontIsA;
+  bgBlur.src = back.src;
+  bgBlur.style.opacity = '1';
+  showTitle(sc.title);
+  censor.style.display = 'none';
+  stage.style.transform = '';
+  const vg = document.getElementById('vignette');
+  vg.style.transitionDuration = sc.letter ? '4s' : '1.2s';
+  document.documentElement.style.setProperty('--vig', sc.vig != null ? sc.vig : 0.22);
+}
+
+function showTitle(t){
+  sceneTitle.classList.remove('show');
+  if(!t){ sceneTitle.textContent=''; return; }
+  sceneTitle.textContent = t;
+  void sceneTitle.offsetWidth;
+  sceneTitle.classList.add('show');
+}
+
+/* transizione completa verso la scena `target` */
+function goScene(target, after){
+  trans = {mode:'cover', t:0, target, after};
+}
+
+function stepTransition(){
+  if(!trans) return false;
+  if(trans.mode === 'cover'){
+    trans.t++;
+    drawBlocks(Math.min(1, trans.t / (reduceMotion ? 6 : COVER_F)), false);
+    if(trans.t >= (reduceMotion ? 6 : COVER_F)){
+      trans.mode = 'hold';
+      const myTrans = trans;
+      const sc = SCENES[myTrans.target];
+      /* mai un frame nero vuoto: resta coperto finché l'immagine non è pronta */
+      whenLoaded(sc.img).then(()=>{
+        if(trans !== myTrans) return;
+        sceneIdx = myTrans.target;
+        beat = 0;
+        applyScene(sceneIdx);
+        resetSceneFx();
+        chime();
+        if(sc.music !== undefined) startMusic(sc.music);
+        if(myTrans.after) myTrans.after();
+        myTrans.mode = 'reveal';
+        myTrans.t = reduceMotion ? 6 : REVEAL_F;
+      });
+    }
+  } else if(trans.mode === 'hold'){
+    drawBlocks(1, false);
+  } else if(trans.mode === 'reveal'){
+    trans.t--;
+    drawBlocks(Math.max(0, trans.t / (reduceMotion ? 6 : REVEAL_F)), true);
+    if(trans.t <= 0){ trans = null; return false; }
+  }
+  return true;
+}
+
+/* ---- reset effetti a cambio scena (le particelle arrivano in fase 4) ---- */
+function resetSceneFx(){
+  if(typeof rebuildParticles === 'function') rebuildParticles();
 }
 
 /* ================================================================
-   ELEMENTI TOCCABILI + EFFETTI + TRANSIZIONI
+   FASE 3 — SISTEMA DI PARTICELLE su #fx
+   Coordinate normalizzate 0–1, quadratini pieni (mai cerchi),
+   glow additivi in globalCompositeOperation='lighter'.
    ================================================================ */
-let fxHearts=[], fxNuggets=[], revealT=0;
-const REVEAL_FRAMES=26;
+function nx(v){ return v * fxW; }
+function nyy(v){ return v * fxH; }
+function pxu(){ return fxW / 390; } /* unità pixel ~1px su iPhone */
 
-/* zone toccabili per scena: {x,y,w,h,type} — type: hearts | nuggets | honk */
-const ZONES={
-  0:(f,b)=>[
-    {x:196,y:HIM_Y,w:HIM_W,h:16*HIM_S,type:'hearts'},
-    {x:262,y:HER_Y,w:HER_W,h:16*HER_S,type:'hearts'}
-  ],
-  1:(f,b)=>{
-    const z=[{x:120,y:GROUND-30,w:80,h:30,type:'honk'}];
-    if(b>=3) z.push({x:230,y:34,w:36,h:24,type:'nuggets'});
-    return z;
+let particles = {};   /* nome effetto → stato */
+let interFx = { hearts:[], nuggets:[], splash:[], undies:null };
+
+const FX_DEFS = {
+  stars: {
+    spawn(){ return { pts: Array.from({length:70}, ()=>({
+      x:Math.random(), y:Math.random()*0.5, ph:Math.random()*Math.PI*2, sp:0.6+Math.random()*0.9, s:1+(Math.random()<0.25?1:0)
+    })) }; },
+    draw(st, t){
+      const u = pxu();
+      for(const p of st.pts){
+        const a = 0.25 + 0.7 * (0.5 + 0.5*Math.sin(t*0.001*p.sp + p.ph));
+        fxc.fillStyle = `rgba(243,237,225,${a})`;
+        fxc.fillRect(nx(p.x), nyy(p.y), p.s*u, p.s*u);
+      }
+    }
   },
-  2:(f,b)=>[{x:120,y:GROUND-30,w:80,h:30,type:'honk'}],
-  3:(f,b)=>[
-    {x:248,y:HIM_Y,w:HIM_W,h:16*HIM_S,type:'hearts'},
-    {x:290,y:HER_Y,w:HER_W,h:16*HER_S,type:'hearts'}
-  ],
-  4:(f,b)=>[
-    {x:W/2-HIM_W-10,y:HIM_Y,w:HIM_W,h:16*HIM_S,type:'hearts'},
-    {x:W/2+10,y:HER_Y,w:HER_W,h:16*HER_S,type:'hearts'}
-  ],
-  6:(f,b)=>[{x:150,y:HIM_Y,w:HIM_W+HER_W+8,h:16*HIM_S,type:'hearts'}],
-  7:(f,b)=>[{x:150,y:HIM_Y,w:HIM_W+HER_W+8,h:16*HIM_S,type:'hearts'}],
-  8:(f,b)=>[{x:160,y:HIM_Y,w:HIM_W+HER_W+8,h:16*HIM_S,type:'hearts'}],
-  10:(f,b)=>[
-    {x:128,y:HIM_Y,w:HIM_W,h:16*HIM_S,type:'hearts'},
-    {x:206,y:HER_Y,w:HER_W,h:16*HER_S,type:'hearts'}
-  ],
-  11:(f,b)=>[
-    {x:W/2-HIM_W-8,y:HIM_Y,w:HIM_W,h:16*HIM_S,type:'hearts'},
-    {x:W/2+8,y:HER_Y,w:HER_W,h:16*HER_S,type:'hearts'}
-  ]
-};
-
-function triggerZone(z){
-  if(z.type==='hearts'){
-    tone(880,0.07,0.1,'sine'); tone(1174,0.06,0.14,'sine',0.06);
-    for(let i=0;i<7;i++){
-      fxHearts.push({x:z.x+z.w/2, y:z.y+6, vx:(Math.random()-0.5)*2.2, vy:-1.2-Math.random()*1.4, life:52, s:1.2+Math.random()*1.4});
+  shootingStar: {
+    spawn(){ return { next: 2500 + Math.random()*6000, act:null }; },
+    draw(st, t, dt){
+      const u = pxu();
+      if(!st.act){
+        st.next -= dt;
+        if(st.next <= 0){
+          st.act = { x:0.1+Math.random()*0.5, y:0.04+Math.random()*0.16, k:0 };
+        }
+      } else {
+        const a = st.act;
+        a.k += dt/900;
+        const xx = a.x + a.k*0.32, yy = a.y + a.k*0.13;
+        for(let i=0;i<7;i++){
+          const tr = i/7;
+          fxc.fillStyle = `rgba(250,246,238,${(1-tr)*(1-a.k)})`;
+          fxc.fillRect(nx(xx - tr*0.05), nyy(yy - tr*0.02), (i<2?4:3)*u*(1-tr+0.3), 2*u);
+        }
+        if(a.k >= 1){ st.act = null; st.next = 8000 + Math.random()*8000; }
+      }
     }
-  } else if(z.type==='nuggets'){
-    tone(392,0.08,0.12,'square'); tone(494,0.08,0.14,'square',0.08);
-    for(let i=0;i<9;i++){
-      fxNuggets.push({x:z.x+4+Math.random()*(z.w-8), y:z.y+z.h, vy:0.5+Math.random()*0.9, life:200, r:Math.random()*2});
-    }
-  } else if(z.type==='honk'){
-    tone(330,0.12,0.14,'square'); tone(262,0.12,0.2,'square',0.13);
-  }
-}
-
-function drawFx(){
-  /* cuoricini che scoppiano */
-  fxHearts.forEach(h=>{
-    h.x+=h.vx; h.y+=h.vy; h.vy+=0.05; h.life--;
-    drawHeart(h.x, h.y, h.s, `rgba(217,119,87,${Math.max(0,h.life/52)})`);
-  });
-  fxHearts=fxHearts.filter(h=>h.life>0);
-  /* pioggia di nugget */
-  fxNuggets.forEach(n=>{
-    n.y+=n.vy; n.life--;
-    const c1='#e0a850', c2='#c9903a';
-    px(n.x, n.y, 5, 3, c1);
-    px(n.x+1, n.y-1, 3, 1, c1);
-    px(n.x+1+n.r, n.y+1, 2, 1, c2);
-    if(n.y>GROUND-2){ n.y=GROUND-2; n.vy=0; }
-  });
-  fxNuggets=fxNuggets.filter(n=>n.life>0);
-}
-
-function drawZoneTips(){
-  const zf=ZONES[stepIdx];
-  if(!zf) return;
-  const zones=zf(frame,beat);
-  /* stellina che pulsa sopra le zone toccabili */
-  if(frame%200<70){
-    const a=0.5+Math.sin(frame/6)*0.4;
-    for(const z of zones){
-      ctx.fillStyle=`rgba(237,162,131,${a})`;
-      ctx.font="8px 'Press Start 2P', monospace";
-      ctx.textAlign='center';
-      ctx.fillText('✦', z.x+z.w/2, z.y-6);
-    }
-  }
-  /* suggerimento una tantum nella prima scena */
-  if(stepIdx===0 && frame<520){
-    pixelText('✦ = tocca!', W/2, 40, 7, CORAL_DK);
-  }
-}
-
-function drawReveal(){
-  if(revealT<=0) return;
-  const k=revealT/REVEAL_FRAMES;
-  const B=12;
-  ctx.fillStyle=NIGHT_BG;
-  for(let y=0;y<H;y+=B)for(let x=0;x<W;x+=B){
-    const h=((x*7919+y*104729)%1000)/1000;
-    if(h<k) ctx.fillRect(x,y,B,B);
-  }
-  revealT--;
-}
-
-/* ---- ciclo principale ---- */
-function loop(){
-  if(contractDone) return; /* la festa finale ha il suo ciclo */
-  frame++;
-  if(building){
-    /* pixel che arrivano: pochi all'inizio, poi valanga */
-    const speed = reduceMotion ? 400 : Math.min(4+Math.floor(buildShown/60), 90);
-    for(let k=0;k<speed && buildShown<buildOrder.length;k++){
-      const [x,y]=buildOrder[buildShown++];
-      ctx.drawImage(buildBuf, x,y,4,4, x,y,4,4);
-      /* scintilla corallo */
-      if(Math.random()<0.06){ ctx.fillStyle=CORAL_HI; ctx.fillRect(x,y,4,4); }
-    }
-    if(buildShown>=buildOrder.length){
-      building=false;
-      showDialog();
-    }
-    requestAnimationFrame(loop);
-    return;
-  }
-  const st=STORY[stepIdx];
-  st.bg(frame);
-  st.draw(frame,beat);
-  drawFx();
-  drawZoneTips();
-  drawReveal();
-  requestAnimationFrame(loop);
-}
-
-/* ================================================================
-   AUDIO — voci blip stile Animal Crossing (Web Audio, zero file)
-   ================================================================ */
-let AC=null, soundOn=true;
-function ensureAudio(){
-  if(!AC){
-    try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=null; }
-  }
-  if(AC && AC.state==='suspended') AC.resume();
-}
-function tone(freq, vol=0.1, dur=0.06, type='square', delay=0){
-  if(!AC || !soundOn) return;
-  const t=AC.currentTime+delay;
-  const o=AC.createOscillator(), g=AC.createGain();
-  o.type=type;
-  o.frequency.setValueAtTime(freq, t);
-  g.gain.setValueAtTime(vol, t);
-  g.gain.exponentialRampToValueAtTime(0.0008, t+dur);
-  o.connect(g); g.connect(AC.destination);
-  o.start(t); o.stop(t+dur+0.03);
-}
-/* voce per personaggio: lei acuta, lui grave, narratore neutro */
-const VOICES={GIGIA:590, ROBERTA:590, LUCA:320, SPIDERSU:320, NARRATORE:445};
-function voiceBlip(name, quiet){
-  const base=VOICES[name]||445;
-  tone(base*(0.92+Math.random()*0.18), quiet?0.045:0.09, 0.05, 'square');
-}
-function chime(){ tone(523,0.07,0.14,'triangle'); tone(784,0.07,0.18,'triangle',0.09); }
-function buzz(){ tone(150,0.1,0.12,'sawtooth'); }
-function fanfare(){
-  tone(523,0.1,0.16,'triangle');
-  tone(659,0.1,0.16,'triangle',0.14);
-  tone(784,0.1,0.22,'triangle',0.28);
-  tone(1046,0.12,0.4,'triangle',0.46);
-}
-const sndBtn=document.getElementById('sndBtn');
-sndBtn.addEventListener('click', e=>{
-  e.stopPropagation();
-  ensureAudio();
-  soundOn=!soundOn;
-  sndBtn.textContent=soundOn?'🔊':'🔇';
-});
-
-/* ---- musichetta chiptune di sottofondo (arpeggi generati, zero file) ---- */
-let musicTimer=null, musicStep=0;
-/* Cmaj7 → Am7 → Fmaj7 → G : giro dolce */
-const MEL_MAIN=[262,330,392,494, 220,262,330,392, 175,220,262,330, 196,247,294,392];
-const MEL_PARTY=[392,494,587,784, 440,523,659,880, 349,440,523,698, 392,494,587,784];
-function startMusic(kind){
-  stopMusic();
-  const mel = kind==='party' ? MEL_PARTY : MEL_MAIN;
-  const step = kind==='party' ? 210 : 265;
-  musicStep=0;
-  musicTimer=setInterval(()=>{
-    if(!AC || !soundOn) return;
-    const n=mel[musicStep%mel.length];
-    tone(n, 0.026, 0.3, 'triangle');
-    if(musicStep%4===0) tone(n/2, 0.018, 0.55, 'sine');
-    musicStep++;
-  }, step);
-}
-function stopMusic(){ clearInterval(musicTimer); musicTimer=null; }
-
-/* ---- dialoghi ---- */
-function showDialog(){
-  dlg.style.display='block';
-  beat=0;
-  startMusic('main');
-  speak();
-}
-let accBuf='';   /* frase formaggiosa che si accumula */
-function speak(){
-  const st=STORY[stepIdx];
-  const entry=st.dialogs[beat];
-  const name=entry[0], text=entry[1], mode=entry[2]||'';
-  const isLetter=!!st.letter;
-  dlgName.textContent=name;
-  dlgName.style.background = name==='NARRATORE' ? '#57534c' : (name==='GIGIA'||name==='ROBERTA') ? '#d97757' : '#3d5a80';
-  dlgNext.style.visibility='hidden';
-  clearInterval(typeTimer);
-
-  if(mode==='full'){
-    /* frase intera ricomposta, mostrata tutta insieme */
-    accBuf='';
-    fullText=text; typing=false;
-    dlgText.textContent=text;
-    dlgNext.style.visibility='visible';
-    return;
-  }
-  if(mode!=='acc') accBuf='';
-  const prefix = mode==='acc' && accBuf ? accBuf+' ' : '';
-  dlgText.textContent=prefix;
-  fullText=text; charI=0; typing=true;
-
-  const speed = reduceMotion ? 2 : (isLetter ? 46 : 24);
-  const silent = mode==='silent';
-  typeTimer=setInterval(()=>{
-    if(charI<fullText.length){
-      const ch=fullText[charI++];
-      dlgText.textContent+=ch;
-      if(!silent && ch!==' ' && charI%2===0) voiceBlip(name, isLetter);
-    }else{
-      clearInterval(typeTimer);
-      typing=false;
-      if(mode==='acc') accBuf=prefix+fullText;
-      dlgNext.style.visibility='visible';
-    }
-  }, speed);
-}
-let contractOpen=false;
-function advance(){
-  ensureAudio();
-  if(stage.style.display!=='flex') return;
-  if(building || contractOpen || contractDone) return;
-  if(typing){
-    const st=STORY[stepIdx];
-    const entry=st.dialogs[beat];
-    clearInterval(typeTimer);
-    const mode=entry[2]||'';
-    const prefix = mode==='acc' && accBuf ? accBuf+' ' : (mode==='acc'?'':'');
-    dlgText.textContent=(mode==='acc'?prefix:'')+fullText;
-    if(mode==='acc') accBuf=(prefix)+fullText;
-    typing=false;
-    dlgNext.style.visibility='visible';
-    return;
-  }
-  hint.style.display='none';
-  const st=STORY[stepIdx];
-  if(beat < st.dialogs.length-1){
-    beat++;
-    speak();
-  } else if(stepIdx < STORY.length-1){
-    stepIdx++;
-    frame=0;
-    beat=0;
-    accBuf='';
-    revealT=REVEAL_FRAMES;
-    fxHearts=[]; fxNuggets=[];
-    if(STORY[stepIdx].letter){ stopMusic(); }
-    chime();
-    speak();
-  } else {
-    /* fine storia → contratto */
-    dlg.style.display='none';
-    openContract();
-  }
-}
-document.getElementById('gameWrap').addEventListener('click', e=>{
-  /* tap sul box dialogo = avanza sempre */
-  if(e.target.closest('#dialog')){ advance(); return; }
-  /* tap sul canvas: prima controlla le zone toccabili */
-  if(stage.style.display==='flex' && !building && !contractOpen && !contractDone){
-    const rect=cv.getBoundingClientRect();
-    const mx=(e.clientX-rect.left)*W/rect.width;
-    const my=(e.clientY-rect.top)*H/rect.height;
-    const zf=ZONES[stepIdx];
-    if(zf){
-      for(const z of zf(frame,beat)){
-        if(mx>=z.x && mx<=z.x+z.w && my>=z.y-10 && my<=z.y+z.h){
-          ensureAudio();
-          triggerZone(z);
-          return; /* il tocco su un elemento non fa avanzare il dialogo */
+  },
+  fireflies: {
+    spawn(){ return { pts: Array.from({length:16}, ()=>({
+      x:Math.random(), y:0.45+Math.random()*0.45, vx:0, vy:0, ph:Math.random()*Math.PI*2
+    })) }; },
+    draw(st, t){
+      const u = pxu();
+      for(const p of st.pts){
+        p.vx += (Math.random()-0.5)*0.00003; p.vy += (Math.random()-0.5)*0.00003;
+        p.vx *= 0.985; p.vy *= 0.985;
+        p.x = (p.x + p.vx + 1) % 1; p.y = Math.min(0.95, Math.max(0.35, p.y + p.vy));
+        const gl = 0.5 + 0.5*Math.sin(t*0.0022 + p.ph);
+        if(gl > 0.25){
+          fxc.save();
+          fxc.globalCompositeOperation = 'lighter';
+          const g = fxc.createRadialGradient(nx(p.x), nyy(p.y), 0, nx(p.x), nyy(p.y), 7*u);
+          g.addColorStop(0, `rgba(240,192,96,${gl*0.5})`);
+          g.addColorStop(1, 'rgba(240,192,96,0)');
+          fxc.fillStyle = g;
+          fxc.fillRect(nx(p.x)-7*u, nyy(p.y)-7*u, 14*u, 14*u);
+          fxc.restore();
+          fxc.fillStyle = `rgba(250,220,140,${gl})`;
+          fxc.fillRect(nx(p.x), nyy(p.y), 2*u, 2*u);
         }
       }
     }
+  },
+  dust: {
+    spawn(){ return { pts: Array.from({length:30}, ()=>({
+      x:Math.random(), y:Math.random(), a:0.15+Math.random()*0.2, sp:0.3+Math.random()*0.6, ph:Math.random()*9
+    })) }; },
+    draw(st, t, dt){
+      const u = pxu();
+      for(const p of st.pts){
+        p.y -= 0.00002*dt*p.sp; p.x += 0.00001*dt*p.sp;
+        if(p.y < -0.02){ p.y = 1.02; p.x = Math.random(); }
+        if(p.x > 1.02) p.x = -0.02;
+        fxc.fillStyle = `rgba(243,230,205,${p.a*(0.7+0.3*Math.sin(t*0.001+p.ph))})`;
+        fxc.fillRect(nx(p.x), nyy(p.y), 2*u, 2*u);
+      }
+    }
+  },
+  sunbeam: {
+    spawn(sc){ return { at: sc.beamAt || {x:0.72, y:0.05} }; },
+    draw(st, t){
+      const ang = (-24 + Math.sin(t*0.00022)*3) * Math.PI/180;
+      fxc.save();
+      fxc.globalCompositeOperation = 'lighter';
+      fxc.translate(nx(st.at.x), nyy(st.at.y));
+      fxc.rotate(ang);
+      const w = nx(0.16);
+      const g = fxc.createLinearGradient(-w, 0, w, 0);
+      g.addColorStop(0, 'rgba(255,238,200,0)');
+      g.addColorStop(0.5, 'rgba(255,238,200,0.10)');
+      g.addColorStop(1, 'rgba(255,238,200,0)');
+      fxc.fillStyle = g;
+      fxc.fillRect(-w, -nyy(0.1), w*2, nyy(1.1));
+      fxc.restore();
+    }
+  },
+  steam: {
+    spawn(sc){
+      const srcs = sc.steamAt || [[0.30,0.52],[0.44,0.50],[0.37,0.54]];
+      return { cols: srcs.map(([x,y],i)=>({ x, y, seed:i*37, puffs: Array.from({length:5},(_,j)=>({k:j/5})) })) };
+    },
+    draw(st, t, dt){
+      const u = pxu();
+      for(const c of st.cols){
+        for(const p of c.puffs){
+          p.k += dt/4200;
+          if(p.k > 1) p.k -= 1;
+          const yy = c.y - p.k*0.12;
+          const xx = c.x + Math.sin((p.k*7)+c.seed)*0.008;
+          const s = (2 + p.k*5)*u;
+          fxc.fillStyle = `rgba(230,224,210,${0.28*(1-p.k)})`;
+          fxc.fillRect(nx(xx)-s/2, nyy(yy), s, s);
+        }
+      }
+    }
+  },
+  sparkle: {
+    spawn(sc){ return { band: sc.sparkleBand || [0.52,0.62], pts: Array.from({length:24}, ()=>({
+      x:Math.random(), off:Math.random(), t:Math.random()*2000
+    })) }; },
+    draw(st, t, dt){
+      const u = pxu();
+      for(const p of st.pts){
+        p.t -= dt;
+        if(p.t <= 0){ p.t = 400 + Math.random()*1800; p.x = Math.random(); p.off = Math.random(); }
+        if(p.t > 300 && p.t < 900){
+          const a = Math.sin((p.t-300)/600*Math.PI);
+          fxc.fillStyle = `rgba(250,246,238,${a*0.9})`;
+          const y = st.band[0] + (st.band[1]-st.band[0])*p.off;
+          fxc.fillRect(nx(p.x), nyy(y), 2*u, 2*u);
+        }
+      }
+    }
+  },
+  petals: {
+    spawn(){ return { pts: Array.from({length:18}, ()=>({
+      x:Math.random(), y:Math.random()*-1, sp:0.5+Math.random()*0.7, ph:Math.random()*9, c:Math.random()<0.5
+    })) }; },
+    draw(st, t, dt){
+      const u = pxu();
+      for(const p of st.pts){
+        p.y += 0.00004*dt*p.sp;
+        if(p.y > 1.02){ p.y = -0.04; p.x = Math.random(); }
+        const xx = p.x + Math.sin(t*0.0012 + p.ph)*0.03;
+        fxc.fillStyle = p.c ? 'rgba(237,162,131,0.85)' : 'rgba(232,138,160,0.85)';
+        fxc.fillRect(nx(xx), nyy(p.y), 3*u, 3*u);
+      }
+    }
+  },
+  notes: {
+    spawn(){ return { pts: [] }; },
+    draw(st, t, dt){
+      const u = pxu();
+      const bp = beatPhase();
+      if(st.lastBp === undefined) st.lastBp = 1;
+      if(bp < st.lastBp && st.pts.length < 8){
+        st.pts.push({ x:0.2+Math.random()*0.6, y:0.62, k:0, g:Math.random()<0.5?'♪':'♫', c:Math.random()<0.5 });
+      }
+      st.lastBp = bp;
+      for(const p of st.pts){
+        p.k += dt/2600;
+        fxc.fillStyle = p.c ? `rgba(217,119,87,${1-p.k})` : `rgba(237,162,131,${1-p.k})`;
+        fxc.font = `${Math.round(12*u)}px 'Press Start 2P', monospace`;
+        fxc.textAlign = 'center';
+        fxc.fillText(p.g, nx(p.x + Math.sin(p.k*6)*0.02), nyy(p.y - p.k*0.3));
+      }
+      st.pts = st.pts.filter(p=>p.k < 1);
+    }
+  },
+  laser: {
+    spawn(){ return { beams: [0,1,2,3].map(i=>({ ph:i*Math.PI/4, sp:(i%2?1:-1)*(0.0004+i*0.0001), c:i%2 })) }; },
+    draw(st, t){
+      const bp = beatPhase();
+      const pulse = 0.35 + 0.5*(1-bp);
+      fxc.save();
+      fxc.globalCompositeOperation = 'lighter';
+      for(const b of st.beams){
+        const a = Math.PI/2 + Math.sin(t*b.sp*2 + b.ph)*0.9;
+        fxc.save();
+        fxc.translate(nx(0.5), nyy(0.16));
+        fxc.rotate(a - Math.PI/2);
+        const g = fxc.createLinearGradient(0,0,0,nyy(0.8));
+        const col = b.c ? '167,139,250' : '103,232,249';
+        g.addColorStop(0, `rgba(${col},${pulse})`);
+        g.addColorStop(1, `rgba(${col},0)`);
+        fxc.fillStyle = g;
+        fxc.fillRect(-2*pxu(), 0, 4*pxu(), nyy(0.8));
+        fxc.restore();
+      }
+      fxc.restore();
+    }
+  },
+  bulbs: {
+    spawn(sc){
+      const pos = sc.bulbsAt || Array.from({length:10},(_,i)=>({x:0.08+i*0.09, y:0.5}));
+      return { pos, lit: 0, t: 0, trail: [] };
+    },
+    draw(st, t, dt){
+      const u = pxu();
+      st.t += dt;
+      if(st.lit < st.pos.length && st.t > 420){ st.t = 0; st.lit++; }
+      for(let i=0;i<st.pos.length;i++){
+        const p = st.pos[i];
+        const on = i < st.lit;
+        const gl = on ? (0.65 + 0.35*Math.sin(t*0.003 + i)) : 0.12;
+        if(on){
+          fxc.save();
+          fxc.globalCompositeOperation = 'lighter';
+          const g = fxc.createRadialGradient(nx(p.x), nyy(p.y), 0, nx(p.x), nyy(p.y), 6*u);
+          g.addColorStop(0, `rgba(240,192,96,${gl*0.5})`);
+          g.addColorStop(1, 'rgba(240,192,96,0)');
+          fxc.fillStyle = g;
+          fxc.fillRect(nx(p.x)-6*u, nyy(p.y)-6*u, 12*u, 12*u);
+          fxc.restore();
+        }
+        fxc.fillStyle = `rgba(250,220,140,${gl})`;
+        fxc.fillRect(nx(p.x), nyy(p.y), 2*u, 2*u);
+      }
+      /* cuori che percorrono il sentiero (solo se la scena lo chiede) */
+      if(SCENES[sceneIdx] && SCENES[sceneIdx].pathHearts && st.lit >= st.pos.length){
+        if(!st.h || st.h.k > 1){
+          if(Math.random() < 0.006) st.h = { k:0 };
+        }
+        if(st.h && st.h.k <= 1){
+          st.h.k += dt/3600;
+          const idx = st.h.k * (st.pos.length-1);
+          const i0 = Math.min(st.pos.length-2, Math.floor(idx));
+          const fr = idx - i0;
+          const x = st.pos[i0].x + (st.pos[i0+1].x - st.pos[i0].x)*fr;
+          const y = st.pos[i0].y + (st.pos[i0+1].y - st.pos[i0].y)*fr - 0.02 - Math.sin(st.h.k*Math.PI)*0.01;
+          drawPixelHeart(nx(x), nyy(y), 2*u, `rgba(217,119,87,.95)`);
+        }
+      }
+    }
+  },
+  tvFlicker: {
+    spawn(sc){ return { zone: sc.tvZone || [0.06,0.42,0.30,0.20], t:0, a:0.1 }; },
+    draw(st, t, dt){
+      st.t -= dt;
+      if(st.t <= 0){ st.t = 80 + Math.random()*260; st.a = 0.04 + Math.random()*0.16; }
+      const [x,y,w,h] = st.zone;
+      fxc.save();
+      fxc.globalCompositeOperation = 'lighter';
+      fxc.fillStyle = `rgba(120,160,255,${st.a})`;
+      fxc.fillRect(nx(x), nyy(y), nx(w), nyy(h));
+      fxc.restore();
+    }
+  },
+  snowDust: {
+    spawn(){ return { pts: Array.from({length:40}, ()=>({
+      x:Math.random(), y:Math.random(), sp:0.4+Math.random()*0.6, ph:Math.random()*9
+    })) }; },
+    draw(st, t, dt){
+      const u = pxu();
+      for(const p of st.pts){
+        p.y += 0.000025*dt*p.sp;
+        if(p.y > 1.02){ p.y = -0.02; p.x = Math.random(); }
+        const xx = p.x + Math.sin(t*0.0008 + p.ph)*0.02;
+        fxc.fillStyle = 'rgba(250,250,250,0.75)';
+        fxc.fillRect(nx(xx), nyy(p.y), 2*u, 2*u);
+      }
+    }
   }
+};
+
+function rebuildParticles(){
+  particles = {};
+  specials = { webA:0, spidA:0, ss:{next:1200, act:null} };
+  const sc = SCENES[sceneIdx];
+  if(!sc) return;
+  for(const name of (sc.fx || [])){
+    if(FX_DEFS[name]) particles[name] = FX_DEFS[name].spawn(sc);
+  }
+  interFx.hearts = []; interFx.nuggets = []; interFx.splash = []; interFx.undies = null;
+}
+
+/* ---- effetti speciali per scena (legati al beat) ---- */
+let specials = { webA:0, spidA:0, ss:{next:1200, act:null} };
+
+function drawSpecials(sc, t, dt){
+  const u = pxu();
+  /* scena 2: costellazione a ragnatela + scritta SPIDERSU */
+  if(sc.web){
+    if(beat >= 3) specials.webA = Math.min(1, specials.webA + dt/1200);
+    if(specials.webA > 0){
+      const cx = 0.50, cy = 0.155, R = 0.085, a = specials.webA;
+      fxc.save();
+      fxc.strokeStyle = `rgba(237,162,131,${0.55*a})`;
+      fxc.lineWidth = Math.max(1, u);
+      const spokes = 6, rings = 3;
+      const pt = (ang, r)=>[nx(cx + Math.cos(ang)*r*0.9), nyy(cy + Math.sin(ang)*r*0.62)];
+      for(let i=0;i<spokes;i++){
+        const ang = i/spokes*Math.PI*2 + 0.3;
+        const [xx,yy] = pt(ang, R);
+        fxc.beginPath(); fxc.moveTo(nx(cx), nyy(cy)); fxc.lineTo(xx, yy); fxc.stroke();
+        /* stelline sui nodi */
+        for(let k=1;k<=rings;k++){
+          const [sx,sy] = pt(ang, R*k/rings);
+          fxc.fillStyle = `rgba(243,237,225,${(0.5+0.5*Math.sin(t*0.004+i*2+k))*a})`;
+          fxc.fillRect(sx-u, sy-u, 2*u, 2*u);
+        }
+      }
+      for(let k=1;k<=rings;k++){
+        fxc.beginPath();
+        for(let i=0;i<=spokes;i++){
+          const ang = i/spokes*Math.PI*2 + 0.3;
+          const [xx,yy] = pt(ang, R*k/rings);
+          if(i===0) fxc.moveTo(xx,yy); else fxc.lineTo(xx,yy);
+        }
+        fxc.stroke();
+      }
+      fxc.restore();
+    }
+    if(beat >= 4){
+      specials.spidA = Math.min(1, specials.spidA + dt/900);
+      const a = specials.spidA;
+      fxc.save();
+      fxc.font = `${Math.round(20*u)}px 'Press Start 2P', monospace`;
+      fxc.textAlign = 'center';
+      fxc.fillStyle = `rgba(20,17,16,${0.75*a})`;
+      fxc.fillText('SPIDERSU', nx(0.5)+2*u, nyy(0.30)+2*u);
+      fxc.fillStyle = `rgba(237,162,131,${a})`;
+      fxc.fillText('SPIDERSU', nx(0.5), nyy(0.30));
+      fxc.restore();
+    }
+  }
+  /* scena 7: la scena "pompa" a tempo */
+  if(sc.pump && !reduceMotion){
+    const s = 1 + 0.012*(1 - beatPhase());
+    stage.style.transform = `translateX(-50%) scale(${s.toFixed(4)})`;
+  }
+  /* scena 4: il cielo respira (luminosità) */
+  if(sc.breathe){
+    const a = 0.05 + 0.05*Math.sin(t*0.0006);
+    fxc.save();
+    fxc.globalCompositeOperation = 'lighter';
+    fxc.fillStyle = `rgba(255,190,140,${a})`;
+    fxc.fillRect(0, 0, fxW, nyy(0.5));
+    fxc.restore();
+  }
+  /* scena 12: dal "Ti amo." stella cadente ricorrente + cuore che pulsa */
+  if(sc.letter && beat >= sc.tiAmoBeat){
+    const ss = specials.ss;
+    if(!ss.act){
+      ss.next -= dt;
+      if(ss.next <= 0) ss.act = { x:0.12+Math.random()*0.4, y:0.03+Math.random()*0.07, k:0 };
+    } else {
+      ss.act.k += dt/1100;
+      const a2 = ss.act;
+      for(let i=0;i<7;i++){
+        const tr = i/7;
+        fxc.fillStyle = `rgba(250,246,238,${(1-tr)*(1-a2.k)})`;
+        fxc.fillRect(nx(a2.x + a2.k*0.3 - tr*0.05), nyy(a2.y + a2.k*0.1 - tr*0.018), 3*u, 2*u);
+      }
+      if(a2.k >= 1){ ss.act = null; ss.next = 2600 + Math.random()*2600; }
+    }
+    const hs = (2.6 + Math.sin(t*0.004)*0.7) * u;
+    drawPixelHeart(nx(0.5) - hs*2.5, nyy(0.135) - Math.sin(t*0.004)*3*u, hs, 'rgba(217,119,87,.95)');
+  }
+}
+
+/* ---- eventi legati al beat corrente ---- */
+function onBeat(si, b){
+  const sc = SCENES[si];
+  if(!sc) return;
+  /* gag della CENSURA (scena 9) */
+  if(sc.censorAt !== undefined){
+    if(b === sc.censorAt){
+      censor.style.display = 'block';
+      interFx.undies = { k:0 };
+      comicBuzz();
+    } else if(b >= sc.censorOff || b < sc.censorAt){
+      censor.style.display = 'none';
+    }
+  }
+}
+
+/* cuore pixel (riuso del disegno v1, in scala) */
+const HEART_M = ['.X.X.','XXXXX','XXXXX','.XXX.','..X..'];
+function drawPixelHeart(x, y, s, color){
+  fxc.fillStyle = color;
+  for(let r=0;r<5;r++)for(let c=0;c<5;c++)
+    if(HEART_M[r][c]==='X') fxc.fillRect(x+c*s, y+r*s, s, s);
+}
+
+let lastT = 0;
+function drawParticles(){
+  const t = performance.now();
+  const dt = Math.min(50, t - (lastT || t));
+  lastT = t;
+  if(contractDone){
+    if(typeof drawCelebration === 'function') drawCelebration(t, dt);
+    return;
+  }
+  const sc = SCENES[sceneIdx];
+  if(!sc) return;
+  for(const name in particles){
+    FX_DEFS[name].draw(particles[name], t, dt);
+  }
+  if(typeof drawSpecials === 'function') drawSpecials(sc, t, dt);
+  drawInterFx(t, dt);
+  if(typeof drawZoneTips === 'function') drawZoneTips(t);
+}
+
+/* ---- effetti interattivi (cuori, nugget, splash, mutanda) ---- */
+function drawInterFx(t, dt){
+  const u = pxu();
+  for(const h of interFx.hearts){
+    h.x += h.vx*dt; h.y += h.vy*dt; h.vy += 0.0000012*dt; h.life -= dt;
+    drawPixelHeart(nx(h.x), nyy(h.y), h.s*u, `rgba(217,119,87,${Math.max(0,h.life/900)})`);
+  }
+  interFx.hearts = interFx.hearts.filter(h=>h.life>0);
+  for(const n of interFx.nuggets){
+    n.y += n.vy*dt; n.life -= dt;
+    if(n.y > 0.96){ n.y = 0.96; n.vy = 0; }
+    fxc.fillStyle = '#e0a850';
+    fxc.fillRect(nx(n.x), nyy(n.y), 5*u, 3*u);
+    fxc.fillRect(nx(n.x)+u, nyy(n.y)-u, 3*u, u);
+    fxc.fillStyle = '#c9903a';
+    fxc.fillRect(nx(n.x)+u+n.r*u, nyy(n.y)+u, 2*u, u);
+  }
+  interFx.nuggets = interFx.nuggets.filter(n=>n.life>0);
+  for(const s of interFx.splash){
+    s.x += s.vx*dt; s.y += s.vy*dt; s.vy += 0.000002*dt; s.life -= dt;
+    fxc.fillStyle = `rgba(180,225,240,${Math.max(0,s.life/700)})`;
+    fxc.fillRect(nx(s.x), nyy(s.y), 2*u, 2*u);
+  }
+  interFx.splash = interFx.splash.filter(s=>s.life>0);
+  /* mutanda pixel che vola ad arco (gag censura) */
+  if(interFx.undies){
+    const p = interFx.undies;
+    p.k += dt/2400;
+    if(p.k >= 1){ interFx.undies = null; }
+    else {
+      const xx = 0.05 + p.k*0.9;
+      const yy = 0.30 - Math.sin(p.k*Math.PI)*0.16;
+      const M = ['XXXXX','XwXwX','.XXX.','.X.X.'];
+      const s = 4*u;
+      for(let r=0;r<4;r++)for(let c=0;c<5;c++){
+        const ch = M[r][c]; if(ch==='.') continue;
+        fxc.fillStyle = ch==='X' ? '#e05a8a' : '#faf6ee';
+        fxc.fillRect(nx(xx)+c*s, nyy(yy)+r*s, s, s);
+      }
+    }
+  }
+}
+
+/* ================================================================
+   FASE 4 — ZONE TOCCABILI (coordinate normalizzate 0–1)
+   Un tap su una zona NON fa avanzare il dialogo; un tap altrove sì.
+   ================================================================ */
+function hitZone(e){
+  const sc = SCENES[sceneIdx];
+  if(!sc || !sc.zones || !sc.zones.length) return false;
+  const r = stage.getBoundingClientRect();
+  const mx = (e.clientX - r.left) / r.width;
+  const my = (e.clientY - r.top) / r.height;
+  for(const z of sc.zones){
+    if(mx >= z.x && mx <= z.x + z.w && my >= z.y && my <= z.y + z.h){
+      ensureAudio();
+      triggerZone(z);
+      return true;
+    }
+  }
+  return false;
+}
+
+function triggerZone(z){
+  const cx = z.x + z.w/2, cy = z.y + z.h/2;
+  if(z.type === 'hearts'){
+    /* arpeggio dolce */
+    tone(659,0.06,0.12,'sine'); tone(880,0.06,0.12,'sine',0.07); tone(1174,0.05,0.16,'sine',0.14);
+    for(let i=0;i<7;i++){
+      interFx.hearts.push({
+        x:cx, y:cy, vx:(Math.random()-0.5)*0.00012, vy:-0.00008-Math.random()*0.00008,
+        life:900, s:1.4+Math.random()*1.4
+      });
+    }
+  } else if(z.type === 'nuggets'){
+    tone(392,0.08,0.12,'square'); tone(494,0.08,0.14,'square',0.08);
+    for(let i=0;i<10;i++){
+      interFx.nuggets.push({
+        x:z.x + 0.02 + Math.random()*(z.w-0.04), y:z.y + z.h,
+        vy:0.00008 + Math.random()*0.0001, life:3600, r:Math.random()*2|0
+      });
+    }
+  } else if(z.type === 'honk'){
+    /* clacson a due note (acuto per il granchietto) */
+    const m = z.hi ? 2 : 1;
+    tone(330*m,0.12,0.14,'square'); tone(262*m,0.12,0.2,'square',0.13);
+  } else if(z.type === 'wave'){
+    tone(196,0.05,0.3,'sine'); tone(147,0.04,0.4,'sine',0.1);
+    for(let i=0;i<12;i++){
+      interFx.splash.push({
+        x:cx + (Math.random()-0.5)*z.w*0.8, y:cy,
+        vx:(Math.random()-0.5)*0.00012, vy:-0.00010-Math.random()*0.00008, life:700
+      });
+    }
+    /* scintillii extra */
+    if(particles.sparkle){
+      for(const p of particles.sparkle.pts){ if(Math.random()<0.5) p.t = 320 + Math.random()*300; }
+    }
+  } else if(z.type === 'bass'){
+    /* boom sub */
+    tone(55,0.30,0.5,'sine'); tone(41,0.22,0.6,'sine',0.05); tone(110,0.10,0.2,'sawtooth');
+  } else if(z.type === 'tv'){
+    /* sfarfallio extra */
+    tone(90+Math.random()*400,0.05,0.08,'sawtooth');
+    if(particles.tvFlicker){ particles.tvFlicker.a = 0.30; particles.tvFlicker.t = 350; }
+  }
+}
+
+/* ✦ pulsante sopra le zone: visibile 3 s ogni 12 s */
+let hintShown = false, hintT = 0;
+function drawZoneTips(t){
+  if(trans) return;
+  const sc = SCENES[sceneIdx];
+  if(!sc || !sc.zones || !sc.zones.length) return;
+  const cyc = t % 12000;
+  if(cyc > 3000) return;
+  const u = pxu();
+  const a = (0.45 + 0.4*Math.sin(t*0.012)) * Math.min(1, cyc/400, (3000-cyc)/400);
+  fxc.fillStyle = `rgba(237,162,131,${Math.max(0,a)})`;
+  fxc.font = `${Math.round(9*u)}px 'Press Start 2P', monospace`;
+  fxc.textAlign = 'center';
+  for(const z of sc.zones){
+    fxc.fillText('✦', nx(z.x + z.w/2), nyy(z.y) - 4*u);
+  }
+  /* suggerimento una sola volta, nella scena 0 */
+  if(sceneIdx === 0 && !hintShown){
+    hintShown = true;
+    zoneHint.style.opacity = '1';
+    setTimeout(()=>{ zoneHint.style.opacity = '0'; }, 4200);
+  }
+}
+
+/* ================================================================
+   DIALOGHI — macchina a stati (acc / silent / full)
+   ================================================================ */
+let sceneIdx = 0, beat = 0, typing = false, fullText = '', charI = 0, typeTimer = null;
+let accBuf = '';
+let storyDone = false, contractOpen = false, contractDone = false;
+
+function nameColor(name){
+  if(name === 'NARRATORE') return '#57534c';
+  if(name === 'GIGIA' || name === 'ROBERTA') return '#d97757';
+  return '#3d5a80';
+}
+
+function speak(){
+  const sc = SCENES[sceneIdx];
+  const entry = sc.dialogs[beat];
+  if(!entry) return;
+  const name = entry[0], text = entry[1], mode = entry[2] || '';
+  const isLetter = !!sc.letter;
+  dlg.classList.toggle('letter', isLetter);
+  dlgName.textContent = name;
+  dlgName.style.background = nameColor(name);
+  dlgNext.style.visibility = 'hidden';
+  clearInterval(typeTimer);
+  if(typeof onBeat === 'function') onBeat(sceneIdx, beat);
+
+  if(mode === 'full'){
+    accBuf = '';
+    fullText = text; typing = false;
+    dlgText.textContent = text;
+    dlgText.scrollTop = 0;
+    dlgNext.style.visibility = 'visible';
+    return;
+  }
+  if(mode !== 'acc') accBuf = '';
+  const prefix = mode === 'acc' && accBuf ? accBuf + ' ' : '';
+  dlgText.textContent = prefix;
+  fullText = text; charI = 0; typing = true;
+
+  const speed = reduceMotion ? 2 : (isLetter ? 46 : 24);
+  const silent = mode === 'silent';
+  typeTimer = setInterval(()=>{
+    if(charI < fullText.length){
+      const ch = fullText[charI++];
+      dlgText.textContent += ch;
+      if(mode === 'acc') dlgText.scrollTop = dlgText.scrollHeight;
+      if(!silent && ch !== ' ' && charI % 2 === 0) voiceBlip(name, isLetter);
+    } else {
+      clearInterval(typeTimer);
+      typing = false;
+      if(mode === 'acc') accBuf = prefix + fullText;
+      dlgNext.style.visibility = 'visible';
+    }
+  }, speed);
+}
+
+function advance(){
+  ensureAudio();
+  if(stage.style.display !== 'block') return;
+  if(trans || contractOpen || contractDone || storyDone) return;
+  if(typing){
+    const sc = SCENES[sceneIdx];
+    const entry = sc.dialogs[beat];
+    clearInterval(typeTimer);
+    const mode = entry[2] || '';
+    const prefix = mode === 'acc' && accBuf ? accBuf + ' ' : '';
+    dlgText.textContent = (mode === 'acc' ? prefix : '') + fullText;
+    if(mode === 'acc') accBuf = prefix + fullText;
+    typing = false;
+    dlgNext.style.visibility = 'visible';
+    return;
+  }
+  const sc = SCENES[sceneIdx];
+  if(beat < sc.dialogs.length - 1){
+    beat++;
+    speak();
+  } else if(sceneIdx < SCENES.length - 1){
+    accBuf = '';
+    goScene(sceneIdx + 1, ()=>{ speak(); });
+  } else {
+    /* fine della storia → contratto (fase successiva del piano) */
+    storyDone = true;
+    dlg.style.display = 'none';
+    if(typeof openContract === 'function') openContract();
+  }
+}
+
+stage.addEventListener('click', e=>{
+  if(stage.style.display !== 'block') return;
+  if(e.target.closest('#dialog')){ advance(); return; }
+  if(typeof hitZone === 'function' && hitZone(e)) return;
   advance();
 });
 document.addEventListener('keydown', e=>{
-  if(e.key==='Enter'||e.key===' ') advance();
+  if(e.key === 'Enter' || e.key === ' ') advance();
 });
 
 /* ================================================================
-   FASE 3 — CONTRATTO con pulsante NO che scappa
+   LOOP PRINCIPALE fx
    ================================================================ */
-const contract=document.getElementById('contract');
-const btnNo=document.getElementById('btnNo');
-const btnYes=document.getElementById('btnYes');
-const btnRow=document.getElementById('btnRow');
-const noMsg=document.getElementById('noMsg');
+let rafOn = false;
+function fxLoop(){
+  fxc.clearRect(0, 0, fxW, fxH);
+  if(typeof drawParticles === 'function') drawParticles();
+  stepTransition();
+  requestAnimationFrame(fxLoop);
+}
 
-const NO_TAUNTS=[
+/* ---- ingresso nella storia: dissolvenza a blocchi che apre la scena 0 ---- */
+function startStory(){
+  stage.style.display = 'block';
+  sndBtn.style.display = 'block';
+  scrim.style.opacity = '1';
+  sizeFx();
+  if(!rafOn){ rafOn = true; requestAnimationFrame(fxLoop); }
+  /* parte già tutto coperto, poi si scopre sulla scena 0 */
+  trans = {mode:'cover', t:(reduceMotion ? 6 : COVER_F), target:0, after:()=>{
+    dlg.style.display = 'block';
+    speak();
+  }};
+  stepTransition(); /* entra subito in hold+swap */
+}
+
+/* ================================================================
+   FASE 5 — CONTRATTO con pulsante RIFIUTA che scappa
+   ================================================================ */
+const contract = document.getElementById('contract');
+const btnNo = document.getElementById('btnNo');
+const btnYes = document.getElementById('btnYes');
+const btnRow = document.getElementById('btnRow');
+const noMsg = document.getElementById('noMsg');
+
+const NO_TAUNTS = [
   'no.',
   'il pulsante non è d\'accordo.',
   'errore 403: rifiuto non autorizzato.',
   'nemmeno un nugget ti farebbe cambiare idea?',
   'il pulsante è andato a guardare le stelle. riprova mai.',
-  'clausola art. 6: te l\'avevamo detto.'
+  'art. 8: te l\'avevamo detto.'
 ];
-let taunt=0;
+let taunt = 0;
 
 function dodgeNo(){
   ensureAudio();
   buzz();
-  const rw=btnRow.clientWidth, rh=btnRow.clientHeight;
-  const bw=btnNo.offsetWidth, bh=btnNo.offsetHeight;
-  const nx=Math.random()*(rw-bw-8)+4;
-  const ny=Math.random()*(rh-bh-22)+2;
-  btnNo.style.left=nx+'px';
-  btnNo.style.right='auto';
-  btnNo.style.top=ny+'px';
-  noMsg.textContent=NO_TAUNTS[Math.min(taunt++, NO_TAUNTS.length-1)];
+  const rw = btnRow.clientWidth, rh = btnRow.clientHeight;
+  const bw = btnNo.offsetWidth, bh = btnNo.offsetHeight;
+  const nxp = Math.random() * Math.max(10, rw - bw - 8) + 4;
+  const nyp = Math.random() * Math.max(6, rh - bh - 22) + 2;
+  btnNo.style.left = nxp + 'px';
+  btnNo.style.right = 'auto';
+  btnNo.style.top = nyp + 'px';
+  taunt++;
+  noMsg.textContent = NO_TAUNTS[Math.min(taunt - 1, NO_TAUNTS.length - 1)];
+  if(taunt >= 7){ btnNo.style.opacity = '0.22'; }
+  if(taunt >= 5){ btnNo.style.transform = 'scale(0.85)'; }
 }
 btnNo.addEventListener('mouseenter', dodgeNo);
-btnNo.addEventListener('touchstart', e=>{e.preventDefault(); dodgeNo();}, {passive:false});
-btnNo.addEventListener('click', dodgeNo);
+btnNo.addEventListener('touchstart', e=>{ e.preventDefault(); dodgeNo(); }, {passive:false});
+btnNo.addEventListener('click', e=>{ e.preventDefault(); dodgeNo(); });
 
 function openContract(){
-  contractOpen=true;
-  contract.style.display='flex';
+  contractOpen = true;
+  stopMusic();
+  contract.style.display = 'flex';
 }
 
 btnYes.addEventListener('click', ()=>{
   ensureAudio();
   fanfare();
-  contract.style.display='none';
-  contractDone=true;
+  contract.style.display = 'none';
+  contractOpen = false;
   startCelebration();
 });
 
-/* ---- festa finale ---- */
+/* ================================================================
+   FASE 6 — FINALE: festa sopra s4 + polaroid
+   ================================================================ */
+let celebr = null;
+
 function startCelebration(){
-  dlg.style.display='none';
-  stepIdx=STORY.length; /* fuori dalla storia */
-  fireworks=[]; hearts=[];
+  contractDone = true;
+  dlg.style.display = 'none';
+  /* la festa parte sopra l'immagine s4 (il bacio al tramonto) */
+  const back = backImg(), front = frontImg();
+  back.src = IMGS[4] ? IMGS[4].src : IMG_PATH(4);
+  back.className = '';
+  if(!reduceMotion) back.classList.add('kb-zoom-out');
+  back.classList.add('on');
+  front.classList.remove('on');
+  frontIsA = !frontIsA;
+  bgBlur.src = back.src;
+  showTitle(null);
+  censor.style.display = 'none';
+  stage.style.transform = '';
+  const vg = document.getElementById('vignette');
+  vg.style.transitionDuration = '1.2s';
+  document.documentElement.style.setProperty('--vig', 0.18);
   startMusic('party');
-  setTimeout(showPolaroid, reduceMotion?1500:5200);
-  celebrationLoop();
+  document.getElementById('finalTxt').style.display = 'block';
+  celebr = { fw:[], hearts:[], nextFw:400, nextH:0 };
+  setTimeout(showPolaroid, reduceMotion ? 1500 : 5200);
 }
 
-/* ---- polaroid ricordo ---- */
-const polaroid=document.getElementById('polaroid');
-const polCanvas=document.getElementById('polCanvas');
-function showPolaroid(){
-  const pc=polCanvas.getContext('2d');
-  if(FOTO_BASE64){
-    const img=new Image();
-    img.onload=()=>{
-      /* ritaglio quadrato centrale (cover) */
-      const s=Math.min(img.width,img.height);
-      pc.drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,240,240);
-      polaroid.style.display='flex';
-    };
-    img.src=FOTO_BASE64;
-  } else {
-    /* fallback: scena pixel dei due orsi */
-    const realCtx=ctx;
-    ctx=pc;
-    px(0,0,240,240,'#1b1815');
-    for(let i=0;i<40;i++){
-      ctx.fillStyle=`rgba(243,237,225,${0.3+Math.random()*0.7})`;
-      ctx.fillRect(Math.random()*240|0, Math.random()*150|0, 2, 2);
+function drawCelebration(t, dt){
+  const u = pxu();
+  const c = celebr;
+  if(!c) return;
+  /* fuochi d'artificio pixel */
+  c.nextFw -= dt;
+  if(c.nextFw <= 0 && !reduceMotion){
+    c.nextFw = 500 + Math.random()*450;
+    const cx = 0.15 + Math.random()*0.7, cy = 0.06 + Math.random()*0.24;
+    const cols = ['#d97757','#eda283','#f0c060','#faf6ee'];
+    const col = cols[Math.random()*cols.length|0];
+    tone(880+Math.random()*400, 0.03, 0.2, 'triangle');
+    for(let i=0;i<16;i++){
+      const a = i/16*Math.PI*2;
+      c.fw.push({
+        x:cx, y:cy,
+        vx:Math.cos(a)*(0.00006+Math.random()*0.00005),
+        vy:Math.sin(a)*(0.00006+Math.random()*0.00005),
+        life:900+Math.random()*400, col
+      });
     }
-    px(190,22,18,18,'#f3ede1'); px(184,16,12,12,'#1b1815');
-    px(0,196,240,44,'#12241a');
-    drawBear(52,196-16*4.4,4.4,PAL_HIM,false,0);
-    drawBear(128,196-16*3.8,3.8,PAL_HER,true,0);
-    drawHeart(106,196-16*4.4-26,4);
-    ctx=realCtx;
-    polaroid.style.display='flex';
   }
+  for(const p of c.fw){
+    p.x += p.vx*dt; p.y += p.vy*dt; p.vy += 0.0000009*dt; p.life -= dt;
+    fxc.fillStyle = p.col;
+    fxc.globalAlpha = Math.max(0, Math.min(1, p.life/500));
+    fxc.fillRect(nx(p.x), nyy(p.y), 2.5*u, 2.5*u);
+  }
+  fxc.globalAlpha = 1;
+  c.fw = c.fw.filter(p=>p.life>0);
+  /* cuori che salgono */
+  c.nextH -= dt;
+  if(c.nextH <= 0){
+    c.nextH = 260;
+    c.hearts.push({ x:Math.random(), y:1.04, v:0.00004+Math.random()*0.00005, s:1.4+Math.random()*1.6 });
+  }
+  for(const h of c.hearts){
+    h.y -= h.v*dt;
+    drawPixelHeart(nx(h.x), nyy(h.y), h.s*u, 'rgba(217,119,87,.75)');
+  }
+  c.hearts = c.hearts.filter(h=>h.y > -0.06);
+}
+
+/* ================================================================
+   POLAROID — ritaglio quadrato di s11, o FOTO_BASE64 se presente
+   ================================================================ */
+const polaroid = document.getElementById('polaroid');
+const polCanvas = document.getElementById('polCanvas');
+
+function drawPolFrom(img){
+  const pc = polCanvas.getContext('2d');
+  pc.imageSmoothingEnabled = false;
+  const side = Math.min(img.width, img.height);
+  /* ritaglio centrato al 45% dell'altezza */
+  let sy = Math.round(img.height*0.45 - side/2);
+  sy = Math.max(0, Math.min(img.height - side, sy));
+  const sx = Math.round((img.width - side)/2);
+  pc.drawImage(img, sx, sy, side, side, 0, 0, polCanvas.width, polCanvas.height);
+  polaroid.style.display = 'flex';
   tone(659,0.08,0.2,'triangle'); tone(880,0.08,0.3,'triangle',0.12);
 }
-polaroid.addEventListener('click', ()=>{ polaroid.style.display='none'; });
-function spawnFirework(){
-  const cx=30+Math.random()*(W-60), cy=30+Math.random()*70;
-  const colors=[CORAL,CORAL_HI,'#f0c060','#faf6ee'];
-  const col=colors[Math.random()*colors.length|0];
-  for(let i=0;i<16;i++){
-    const a=i/16*Math.PI*2;
-    fireworks.push({x:cx,y:cy,vx:Math.cos(a)*(1+Math.random()),vy:Math.sin(a)*(1+Math.random()),life:40+Math.random()*20,c:col});
+
+function showPolaroid(){
+  if(FOTO_BASE64){
+    const im = new Image();
+    im.onload = ()=> drawPolFrom(im);
+    im.src = FOTO_BASE64;
+  } else {
+    const im = IMGS[11];
+    if(im && im.complete && im.naturalWidth){ drawPolFrom(im); }
+    else { whenLoaded(11).then(()=> drawPolFrom(IMGS[11])); }
   }
 }
-function celebrationLoop(){
-  frame++;
-  bgNight(frame);
-  if(frame%34===0 && !reduceMotion) spawnFirework();
-  fireworks.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.03;p.life--;});
-  fireworks=fireworks.filter(p=>p.life>0);
-  fireworks.forEach(p=>{ctx.fillStyle=p.c;ctx.fillRect(p.x,p.y,2.5,2.5);});
-  if(frame%16===0) hearts.push({x:Math.random()*W,y:H+6,v:0.4+Math.random()*0.6,s:1.2+Math.random()*1.4});
-  hearts.forEach(h=>h.y-=h.v);
-  hearts=hearts.filter(h=>h.y>-10);
-  hearts.forEach(h=>drawHeart(h.x,h.y,h.s,'rgba(217,119,87,.75)'));
-  const himX=W/2-HIM_W-8, herX=W/2+8;
-  drawBear(himX,HIM_Y,HIM_S,PAL_HIM,false,Math.sin(frame/14)*1.5);
-  drawBear(herX,HER_Y,HER_S,PAL_HER,true,Math.sin(frame/14+2)*1.5);
-  const hs=3.5+Math.sin(frame/10)*0.8;
-  drawHeart(W/2-hs*2.5, HIM_Y-36, hs);
-  pixelText('CONTRATTO RINNOVATO', W/2, 40, 13, CORAL_HI);
-  pixelText('GIGIA ♥ SPIDERSU', W/2, 62, 13, '#faf6ee');
-  pixelText('dal 29.08.2025 - per sempre', W/2, 80, 8, '#c4bcae');
-  requestAnimationFrame(celebrationLoop);
-}
+polaroid.addEventListener('click', ()=>{ polaroid.style.display = 'none'; });
 
-/* ---- avvio: schermata "tocca per iniziare" (sblocca audio iOS) ---- */
-const startScreen=document.getElementById('startScreen');
-let started=false;
+/* ================================================================
+   AVVIO — schermata "tocca per iniziare" (sblocca audio iOS)
+   ================================================================ */
+const startScreen = document.getElementById('startScreen');
+let started = false;
 function startAll(){
   if(started) return;
-  started=true;
-  ensureAudio();
-  chime();
+  started = true;
+  if(typeof ensureAudio === 'function'){ ensureAudio(); chime(); }
+  sndBtn.style.display = 'block';
   if(document.fonts && document.fonts.load){
     document.fonts.load("12px 'Press Start 2P'");
   }
-  startScreen.style.transition='opacity .5s';
-  startScreen.style.opacity='0';
-  setTimeout(()=>{ startScreen.remove(); runTerminal(); }, 520);
+  startScreen.style.transition = 'opacity .5s';
+  startScreen.style.opacity = '0';
+  setTimeout(()=>{
+    startScreen.remove();
+    if(typeof runTerminal === 'function') runTerminal();
+  }, 520);
 }
 startScreen.addEventListener('click', startAll);
-document.addEventListener('keydown', function once(e){
-  startAll();
-}, {once:true});
+document.addEventListener('keydown', function once(e){ startAll(); }, {once:true});
 </script>
 </body>
 </html>
